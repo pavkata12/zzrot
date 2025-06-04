@@ -879,6 +879,11 @@ class NetCafeClient:
             
             menu.addSeparator()
             
+            # Login action
+            self.login_action = QAction('🔐 Login')
+            self.login_action.triggered.connect(self._manual_login)
+            menu.addAction(self.login_action)
+            
             show_timer_action = QAction('⏰ Show Timer')
             show_timer_action.triggered.connect(self._show_overlay)
             menu.addAction(show_timer_action)
@@ -886,6 +891,11 @@ class NetCafeClient:
             reconnect_action = QAction('🔄 Reconnect')
             reconnect_action.triggered.connect(self._manual_reconnect)
             menu.addAction(reconnect_action)
+            
+            # Login action
+            self.login_action = QAction('🔐 Login')
+            self.login_action.triggered.connect(self._manual_login)
+            menu.addAction(self.login_action)
             
             menu.addSeparator()
             
@@ -905,7 +915,17 @@ class NetCafeClient:
         if reason == QSystemTrayIcon.DoubleClick:
             if self.session_active:
                 self._show_overlay()
+            elif self.ws and not self.ws.closed:
+                # Connected but no session - show login
+                try:
+                    if hasattr(self, 'loop') and not self.loop.is_closed():
+                        self.loop.create_task(self.show_login())
+                    else:
+                        asyncio.create_task(self.show_login())
+                except RuntimeError:
+                    logger.warning("Unable to show login: event loop not available")
             else:
+                # Not connected - show lock screen
                 self._show_lock_screen()
     
     def _show_lock_screen(self):
@@ -934,6 +954,24 @@ class NetCafeClient:
     def _manual_reconnect(self):
         self.reconnect_attempts = 0
         asyncio.create_task(self.connect_to_server())
+    
+    def _manual_login(self):
+        """Manual login trigger from tray menu"""
+        if self.ws and not self.ws.closed and not self.session_active:
+            try:
+                if hasattr(self, 'loop') and not self.loop.is_closed():
+                    self.loop.create_task(self.show_login())
+                else:
+                    asyncio.create_task(self.show_login())
+            except RuntimeError:
+                logger.warning("Unable to show login: event loop not available")
+        else:
+            self.tray.showMessage(
+                '⚠️ Login Not Available',
+                'Cannot login: Not connected to server or session already active.',
+                QSystemTrayIcon.Warning,
+                3000
+            )
     
     def _exit(self):
         if self.session_active:
@@ -1032,11 +1070,12 @@ class NetCafeClient:
                 logger.error(f"Failed to start WebSocket handler: {e}")
                 raise
             
-            self.set_status('Connected - Ready for gaming!', True)
+            self.set_status('Ready for login', True)
             self.reconnect_attempts = 0
             
-            # Show login
-            await self.show_login()
+            # DON'T auto-show login - let user trigger it manually
+            # This prevents auto-popup after session ends and reconnect
+            logger.info("✅ Connected to server. Ready for manual login.")
             
         except Exception as e:
             # Enhanced error logging with specific error details
@@ -1243,13 +1282,20 @@ class NetCafeClient:
             self.keyboard_blocker.uninstall()
             self.folder_blocker.uninstall()
             
-            # Cancel WebSocket task if running
-            if self.ws_task and not self.ws_task.done():
-                self.ws_task.cancel()
+            # DON'T cancel WebSocket - we need it for future logins and force_logout messages
+            # Keep WebSocket alive for admin communication
+            
+            # Reset session variables
+            self.session_id = None
+            self.remaining_time = 0
+            self.initial_session_minutes = 0
+            self._notified_5min = False
+            self._notified_1min = False
             
             self._show_lock_screen()  # This will install strict lock-mode keyboard blocker
             
-            self.set_status('Session ended', False)
+            # Set status but keep connection alive
+            self.set_status('Ready for login', True if self.ws and not self.ws.closed else False)
             
             self.tray.showMessage(
                 '🎮 NetCafe Pro 2.0',
@@ -1397,7 +1443,7 @@ class NetCafeClient:
         if msg_type == 'force_logout':
             logger.info("🚨 Force logout received from server")
             
-            # End the session first
+            # End the session first (but keep connection alive)
             await self._end_session()
             
             # Show message to user
@@ -1423,11 +1469,19 @@ class NetCafeClient:
             # Show the message and wait for user to click OK
             result = msg.exec_()
             
-            # After user clicks OK, close the client
-            logger.info("💥 Closing client application after force logout")
+            # After user clicks OK, reset to ready state instead of closing
+            logger.info("🔄 Session ended by admin - client ready for new login")
             
-            # Clean shutdown
-            await self._cleanup_and_exit()
+            # Update status to show ready for login
+            self.set_status('Ready for login', True)
+            
+            # Show notification
+            self.tray.showMessage(
+                '⚠️ Session Ended by Admin',
+                'Your session was ended by administrator.\nComputer is now ready for new login.',
+                QSystemTrayIcon.Warning,
+                5000
+            )
         
         elif msg_type == 'time_update':
             minutes = data.get('minutes', 0)
