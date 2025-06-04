@@ -1,0 +1,48 @@
+{
+    "server": {
+      "host": "192.168.7.2",
+      "port": 8080,
+      "websocket_endpoint": "/ws",
+      "max_reconnect_attempts": 10,
+      "fallback_hosts": [
+        "localhost",
+        "127.0.0.1",
+        "192.168.56.1"
+      ]
+    },
+    "client": {
+      "auto_start": true,
+      "minimize_to_tray": true,
+      "show_notifications": true,
+      "debug_mode": false
+    },
+    "security": {
+      "strict_keyboard_blocking": true,
+      "folder_access_blocking": true,
+      "allow_task_manager": false,
+      "gaming_mode_minimal_blocking": true
+    },
+    "ui": {
+      "timer_overlay": {
+        "show_on_startup": true,
+        "position": {
+          "x": 200,
+          "y": 40
+        },
+        "size": {
+          "width": 800,
+          "height": 200
+        }
+      },
+      "lock_screen": {
+        "show_connection_status": true,
+        "show_computer_id": true
+      }
+    },
+    "logging": {
+      "level": "INFO",
+      "file": "client.log",
+      "max_file_size": "10MB",
+      "backup_count": 5
+    }
+  }
