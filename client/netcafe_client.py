@@ -214,6 +214,49 @@ class LockScreen(QWidget):
         ''')
         self.connection_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(self.connection_label)
+        
+        # Login Button - ALWAYS VISIBLE
+        self.login_button = QPushButton('🔐 LOGIN', self)
+        self.login_button.setStyleSheet('''
+            QPushButton {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                    stop:0 #00FF88, stop:1 #00D4AA);
+                color: black;
+                font-size: 24px;
+                font-weight: bold;
+                padding: 20px 40px;
+                border: none;
+                border-radius: 16px;
+                margin-top: 30px;
+                border: 3px solid rgba(0,255,136,0.8);
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                    stop:0 #00D4AA, stop:1 #00FF88);
+                transform: scale(1.05);
+                border: 3px solid #00FF88;
+            }
+            QPushButton:pressed {
+                background: #008855;
+                transform: scale(0.98);
+            }
+            QPushButton:disabled {
+                background: #444;
+                color: #888;
+                border: 3px solid #666;
+            }
+        ''')
+        self.login_button.setFixedSize(300, 80)
+        
+        # Center the button
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()
+        button_layout.addWidget(self.login_button)
+        button_layout.addStretch()
+        layout.addLayout(button_layout)
+        
+        # Initially disabled until connected
+        self.login_button.setEnabled(False)
     
     def show_lock(self, message='🔒 Computer Locked', details='Please login to continue...'):
         self.status_label.setText(message)
@@ -237,6 +280,8 @@ class LockScreen(QWidget):
                 border-radius: 8px;
                 border: 2px solid rgba(0,255,136,0.3);
             ''')
+            # Enable login button when connected
+            self.login_button.setEnabled(True)
         else:
             self.connection_label.setText(f'🔴 {status}')
             self.connection_label.setStyleSheet('''
@@ -248,6 +293,12 @@ class LockScreen(QWidget):
                 border-radius: 8px;
                 border: 2px solid rgba(255,68,68,0.3);
             ''')
+            # Disable login button when not connected
+            self.login_button.setEnabled(False)
+    
+    def set_login_callback(self, callback):
+        """Set the callback function for when login button is clicked"""
+        self.login_button.clicked.connect(callback)
     
     # SECURITY: Override close event to prevent closing
     def closeEvent(self, event):
@@ -812,6 +863,9 @@ class NetCafeClient:
         # Connect overlay button signals
         self.timer_overlay.minimize_btn.clicked.connect(self._minimize_overlay)
         self.timer_overlay.end_btn.clicked.connect(lambda: asyncio.create_task(self._end_session()))
+        
+        # Connect lock screen login button
+        self.lock_screen.set_login_callback(self._manual_login)
         
         # Start with lock screen
         self._show_lock_screen()
