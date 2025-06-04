@@ -1395,14 +1395,87 @@ class NetCafeClient:
         msg_type = data.get('type')
         
         if msg_type == 'force_logout':
-            QMessageBox.information(None, '⚠️ Session Ended', 
-                                    data.get('message', 'Your session was ended by administrator.'))
+            logger.info("🚨 Force logout received from server")
+            
+            # End the session first
             await self._end_session()
+            
+            # Show message to user
+            msg = QMessageBox()
+            msg.setWindowTitle('⚠️ Session Ended')
+            msg.setText(data.get('message', 'Your session was ended by administrator.'))
+            msg.setIcon(QMessageBox.Information)
+            msg.setStandardButtons(QMessageBox.Ok)
+            msg.setStyleSheet('''
+                QMessageBox {
+                    background: #1a1a2e;
+                    color: white;
+                }
+                QMessageBox QPushButton {
+                    background: #00FF88;
+                    color: black;
+                    padding: 8px 16px;
+                    border-radius: 4px;
+                    font-weight: bold;
+                }
+            ''')
+            
+            # Show the message and wait for user to click OK
+            result = msg.exec_()
+            
+            # After user clicks OK, close the client
+            logger.info("💥 Closing client application after force logout")
+            
+            # Clean shutdown
+            await self._cleanup_and_exit()
         
         elif msg_type == 'time_update':
             minutes = data.get('minutes', 0)
             if minutes > 0 and not self.session_active:
                 await self.start_session(minutes)
+    
+    async def _cleanup_and_exit(self):
+        """Clean shutdown of the application"""
+        try:
+            logger.info("🔄 Starting clean shutdown...")
+            
+            # Stop all timers
+            if hasattr(self, 'session_timer'):
+                self.session_timer.stop()
+            if hasattr(self, 'reconnect_timer'):
+                self.reconnect_timer.stop()
+            
+            # Cleanup resources
+            self._cleanup()
+            
+            # Close WebSocket
+            if self.ws and not self.ws.closed:
+                await self.ws.close()
+            
+            # Close HTTP session
+            if hasattr(self, 'session') and not self.session.closed:
+                await self.session.close()
+            
+            # Hide all windows
+            if hasattr(self, 'lock_screen'):
+                self.lock_screen.hide()
+            if hasattr(self, 'timer_overlay'):
+                self.timer_overlay.hide()
+            
+            # Quit the application from main thread
+            app = QApplication.instance()
+            if app:
+                # Use QTimer.singleShot to call quit from main thread
+                QTimer.singleShot(100, app.quit)
+            
+            logger.info("✅ Clean shutdown completed")
+            
+        except Exception as e:
+            logger.error(f"Error during cleanup: {e}")
+            # Force quit even if cleanup fails
+            app = QApplication.instance()
+            if app:
+                QTimer.singleShot(100, app.quit)
     
     def _start_reconnect_timer(self):
         if not self.reconnect_timer.isActive() and self.reconnect_attempts < self.max_reconnect_attempts:
