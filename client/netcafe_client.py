@@ -148,7 +148,13 @@ class TimerOverlay(QWidget):
 class LockScreen(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        # SECURITY: Remove all window controls, make it impossible to close
+        self.setWindowFlags(
+            Qt.Window | 
+            Qt.FramelessWindowHint | 
+            Qt.WindowStaysOnTopHint |
+            Qt.CustomizeWindowHint  # This removes close button
+        )
         self.setStyleSheet('''
             background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
                 stop:0 #0a0a0a, stop:1 #1a1a2e);
@@ -214,6 +220,7 @@ class LockScreen(QWidget):
         self.details_label.setText(details)
         self.showFullScreen()
         self.raise_()
+        self.activateWindow()
     
     def hide_lock(self):
         self.hide()
@@ -241,13 +248,46 @@ class LockScreen(QWidget):
                 border-radius: 8px;
                 border: 2px solid rgba(255,68,68,0.3);
             ''')
+    
+    # SECURITY: Override close event to prevent closing
+    def closeEvent(self, event):
+        """Prevent lock screen from being closed by any means"""
+        logger.warning("🔒 SECURITY: Attempt to close lock screen blocked!")
+        event.ignore()  # Reject close event
+    
+    # SECURITY: Override key events to block Alt+F4
+    def keyPressEvent(self, event):
+        """Block all attempts to close via keyboard"""
+        # Block Alt+F4
+        if event.key() == Qt.Key_F4 and event.modifiers() == Qt.AltModifier:
+            logger.warning("🔒 SECURITY: Alt+F4 blocked on lock screen!")
+            event.ignore()
+            return
+        # Block Escape key
+        elif event.key() == Qt.Key_Escape:
+            logger.warning("🔒 SECURITY: Escape key blocked on lock screen!")
+            event.ignore()
+            return
+        # Allow other keys
+        super().keyPressEvent(event)
 
 class LoginDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle('🎮 NetCafe Pro 2.0 - Login')
         self.setFixedSize(450, 300)
-        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.Dialog)
+        
+        # SECURITY: Remove close button and make dialog modal + always on top
+        self.setWindowFlags(
+            Qt.Dialog | 
+            Qt.WindowStaysOnTopHint | 
+            Qt.CustomizeWindowHint |  # This removes close button
+            Qt.WindowTitleHint |      # Keep title bar but no close button
+            Qt.WindowSystemMenuHint   # Keep system menu but no close
+        )
+        
+        # SECURITY: Make dialog modal so it blocks interaction with other windows
+        self.setModal(True)
         
         # Gaming style
         self.setStyleSheet('''
@@ -319,48 +359,77 @@ class LoginDialog(QDialog):
         self.password_input.setEchoMode(QLineEdit.Password)
         layout.addWidget(self.password_input)
         
-        # Buttons
-        btn_layout = QHBoxLayout()
-        
-        cancel_btn = QPushButton('❌ Cancel')
-        cancel_btn.clicked.connect(self.reject)
-        cancel_btn.setStyleSheet('''
-            QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                    stop:0 #FF4444, stop:1 #CC3333);
-                color: white;
-            }
-            QPushButton:hover {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                    stop:0 #FF6666, stop:1 #FF4444);
-            }
-        ''')
-        
+        # SECURITY: Only Login button, NO Cancel button
         login_btn = QPushButton('🚀 Start Gaming')
         login_btn.clicked.connect(self.try_login)
         login_btn.setDefault(True)
-        
-        btn_layout.addWidget(cancel_btn)
-        btn_layout.addWidget(login_btn)
-        layout.addLayout(btn_layout)
+        layout.addWidget(login_btn)
         
         # Connect Enter key
         self.password_input.returnPressed.connect(self.try_login)
         self.username_input.returnPressed.connect(self.password_input.setFocus)
         
         self.accepted_login = False
+        self.auto_retry = True  # Auto-retry on failed login
     
     def try_login(self):
         username = self.username_input.text().strip()
         password = self.password_input.text().strip()
         if not username or not password:
             QMessageBox.warning(self, '⚠️ Warning', 'Please enter both username and password!')
+            # Clear fields and try again
+            self.username_input.clear()
+            self.password_input.clear()
+            self.username_input.setFocus()
             return
         self.accepted_login = True
         self.accept()
     
     def get_credentials(self):
         return self.username_input.text().strip(), self.password_input.text().strip()
+    
+    # SECURITY: Override close event to prevent closing
+    def closeEvent(self, event):
+        """Prevent login dialog from being closed by any means"""
+        logger.warning("🔒 SECURITY: Attempt to close login dialog blocked!")
+        event.ignore()  # Reject close event
+    
+    # SECURITY: Override key events to block Alt+F4 and Escape
+    def keyPressEvent(self, event):
+        """Block all attempts to close via keyboard"""
+        # Block Alt+F4
+        if event.key() == Qt.Key_F4 and event.modifiers() == Qt.AltModifier:
+            logger.warning("🔒 SECURITY: Alt+F4 blocked on login dialog!")
+            event.ignore()
+            return
+        # Block Escape key
+        elif event.key() == Qt.Key_Escape:
+            logger.warning("🔒 SECURITY: Escape key blocked on login dialog!")
+            event.ignore()
+            return
+        # Allow other keys (like Tab, Enter, etc.)
+        super().keyPressEvent(event)
+    
+    # SECURITY: Override reject to prevent closing via any reject signal
+    def reject(self):
+        """Prevent dialog from being rejected/closed"""
+        logger.warning("🔒 SECURITY: Attempt to reject login dialog blocked!")
+        # Don't call super().reject() - this prevents closing
+
+    # SECURITY: Show login with auto-retry on failed attempts
+    def show_secure_login(self):
+        """Show login dialog with automatic retry on failure"""
+        while True:
+            result = self.exec()
+            if result == QDialog.Accepted and self.accepted_login:
+                return True
+            else:
+                # Auto-retry: Clear fields and show again
+                self.username_input.clear()
+                self.password_input.clear()
+                self.username_input.setFocus()
+                self.accepted_login = False
+                # Continue loop to show dialog again
 
 class KeyboardBlocker:
     def __init__(self):
@@ -996,17 +1065,64 @@ class NetCafeClient:
             self._start_reconnect_timer()
     
     async def show_login(self):
+        """Show secure login dialog with auto-retry on failures"""
         try:
             dialog = LoginDialog()
-            if dialog.exec() and dialog.accepted_login:
-                username, password = dialog.get_credentials()
-                await self.authenticate(username, password)
-            else:
-                logger.info("Login cancelled")
+            
+            # Keep showing login until successful or user provides valid credentials
+            max_attempts = 5
+            attempt = 0
+            
+            while attempt < max_attempts:
+                attempt += 1
+                logger.info(f"🔐 Login attempt {attempt}/{max_attempts}")
+                
+                if dialog.exec() and dialog.accepted_login:
+                    username, password = dialog.get_credentials()
+                    
+                    # Try authentication
+                    auth_result = await self.authenticate(username, password)
+                    if auth_result:
+                        # Success - break the loop
+                        break
+                    else:
+                        # Failed authentication - clear fields and try again
+                        dialog.username_input.clear()
+                        dialog.password_input.clear()
+                        dialog.username_input.setFocus()
+                        dialog.accepted_login = False
+                        
+                        # Show retry message
+                        if attempt < max_attempts:
+                            QMessageBox.warning(
+                                dialog, 
+                                '❌ Login Failed', 
+                                f'Invalid credentials!\n\nAttempt {attempt}/{max_attempts}\nPlease try again.'
+                            )
+                        else:
+                            QMessageBox.critical(
+                                dialog, 
+                                '🚫 Access Denied', 
+                                'Maximum login attempts reached!\nComputer will remain locked.'
+                            )
+                else:
+                    # Dialog was somehow closed (shouldn't happen with our security)
+                    logger.warning("🔒 SECURITY: Login dialog closed unexpectedly!")
+                    dialog.accepted_login = False
+                    # Continue loop to show again
+            
+            # If we got here without success, keep computer locked
+            if attempt >= max_attempts:
+                logger.warning("🔒 Maximum login attempts reached - keeping computer locked")
+                self._show_lock_screen()
+                
         except Exception as e:
             logger.error(f"Login dialog error: {e}")
+            # On error, show lock screen for security
+            self._show_lock_screen()
     
     async def authenticate(self, username, password):
+        """Authenticate user and return True on success, False on failure"""
         try:
             login_data = {
                 'username': username,
@@ -1014,7 +1130,7 @@ class NetCafeClient:
                 'computer_id': self.computer_id
             }
             
-            logger.info(f"Authenticating user: {username}")
+            logger.info(f"🔐 Authenticating user: {username}")
             
             server_url = self._get_current_server_url()
             async with self.session.post(f'{server_url}/api/login', json=login_data) as response:
@@ -1024,20 +1140,39 @@ class NetCafeClient:
                         self.session_id = data.get('session_id')
                         minutes = data.get('minutes', 0)
                         
-                        logger.info(f"Login successful: {username}, {minutes} minutes")
+                        logger.info(f"✅ Login successful: {username}, {minutes} minutes")
                         
                         if minutes > 0:
                             await self.start_session(minutes)
+                            return True
                         else:
-                            QMessageBox.warning(None, '⚠️ No Time', 'No time available!')
+                            QMessageBox.warning(None, '⚠️ No Time', 'No time available for this user!')
+                            return False
                     else:
-                        QMessageBox.critical(None, '❌ Login Failed', data.get('message', 'Login failed'))
+                        logger.warning(f"❌ Authentication failed for {username}: {data.get('message', 'Unknown error')}")
+                        return False
+                        
+                elif response.status == 401:
+                    # Invalid credentials
+                    logger.warning(f"❌ Invalid credentials for user: {username}")
+                    return False
+                    
+                elif response.status == 403:
+                    # User already logged in elsewhere or other restriction
+                    data = await response.json()
+                    logger.warning(f"❌ Access denied for {username}: {data.get('message', 'Access denied')}")
+                    QMessageBox.warning(None, '🚫 Access Denied', data.get('message', 'Access denied'))
+                    return False
+                    
                 else:
-                    QMessageBox.critical(None, '❌ Error', f'Server error: {response.status}')
+                    logger.error(f"❌ Server error during authentication: {response.status}")
+                    QMessageBox.critical(None, '❌ Server Error', f'Server error: {response.status}')
+                    return False
                     
         except Exception as e:
-            logger.error(f"Authentication error: {e}")
-            QMessageBox.critical(None, '❌ Error', f'Authentication failed: {str(e)}')
+            logger.error(f"❌ Authentication error: {e}")
+            QMessageBox.critical(None, '❌ Connection Error', f'Failed to connect to server: {str(e)}')
+            return False
     
     async def start_session(self, minutes):
         try:
@@ -1045,6 +1180,7 @@ class NetCafeClient:
             
             self.session_active = True
             self.remaining_time = minutes * 60
+            self.initial_session_minutes = minutes  # Track initial minutes for proper calculation
             self.session_timer.start(1000)
             self._notified_5min = False
             self._notified_1min = False
@@ -1075,7 +1211,14 @@ class NetCafeClient:
             logger.info("Ending session")
             
             if self.session_id:
-                minutes_used = (self.remaining_time // 60) if self.remaining_time else 0
+                # Fix: Calculate minutes used correctly
+                # Total session time - remaining time = used time
+                total_minutes = getattr(self, 'initial_session_minutes', 0)
+                remaining_minutes = (self.remaining_time // 60) if self.remaining_time else 0
+                minutes_used = max(0, total_minutes - remaining_minutes)
+                
+                logger.info(f"Session ending: Total={total_minutes}, Remaining={remaining_minutes}, Used={minutes_used}")
+                
                 logout_data = {
                     'session_id': self.session_id,
                     'minutes_used': minutes_used
@@ -1123,6 +1266,15 @@ class NetCafeClient:
             return
         
         self.remaining_time -= 1
+        
+        # Send session update every 10 seconds to keep server in sync
+        if self.remaining_time % 10 == 0 and self.ws and self.session_id:
+            try:
+                # Send session update to server
+                if hasattr(self, 'loop') and not self.loop.is_closed():
+                    self.loop.create_task(self._send_session_update())
+            except Exception as e:
+                logger.debug(f"Failed to send session update: {e}")
         
         # Warnings
         if self.remaining_time <= 300 and not self._notified_5min:
@@ -1174,6 +1326,19 @@ class NetCafeClient:
         
         self._update_timer()
     
+    async def _send_session_update(self):
+        """Send session update to server"""
+        try:
+            if self.ws and self.session_id:
+                update_data = {
+                    'type': 'session_update',
+                    'session_id': self.session_id,
+                    'remaining_time': self.remaining_time
+                }
+                await self.ws.send_str(json.dumps(update_data))
+        except Exception as e:
+            logger.debug(f"Session update send error: {e}")
+    
     def _update_timer(self):
         minutes = self.remaining_time // 60
         seconds = self.remaining_time % 60
@@ -1184,10 +1349,10 @@ class NetCafeClient:
     
     def set_status(self, status, connected=False):
         self.lock_screen.set_connection_status(status, connected)
-        self.timer_overlay.set_status(f'{"🟢" if connected else "🔴"} {status}')
+        self.timer_overlay.set_status(f"{'🟢' if connected else '🔴'} {status}")
         
         if hasattr(self, 'status_action'):
-            self.status_action.setText(f'{"🟢" if connected else "🔴"} {status}')
+            self.status_action.setText(f"{'🟢' if connected else '🔴'} {status}")
         
         logger.info(f"Status: {status} (Connected: {connected})")
     

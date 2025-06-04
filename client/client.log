@@ -1,0 +1,193 @@
+2025-06-04 23:34:40,341 - __main__ - INFO - System tray initialized
+2025-06-04 23:34:40,401 - __main__ - ERROR - ❌ Failed to install keyboard blocker: SetWindowsHookEx failed: 0
+2025-06-04 23:34:40,407 - __main__ - ERROR - Error details: Traceback (most recent call last):
+  File "C:\Users\pavka\Desktop\New folder (2)\client\netcafe_client.py", line 483, in install
+    raise Exception(f"SetWindowsHookEx failed: {ctypes.get_last_error()}")
+Exception: SetWindowsHookEx failed: 0
+
+2025-06-04 23:34:40,407 - __main__ - WARNING - ⚠️  Running without administrator privileges may cause blocking to fail!
+2025-06-04 23:34:40,407 - __main__ - INFO - NetCafe Client initialized. Computer ID: DESKTOP-AU7O0H3_190032518091308
+2025-06-04 23:34:40,408 - __main__ - INFO - Status: Initializing... (Connected: False)
+2025-06-04 23:34:40,409 - __main__ - INFO - 🎮 Starting NetCafe Pro 2.0 Gaming Client
+2025-06-04 23:34:40,416 - __main__ - INFO - Connecting to server: http://192.168.7.2:8080
+2025-06-04 23:34:40,419 - __main__ - INFO - Status: Connecting to server... (Connected: False)
+2025-06-04 23:34:40,446 - __main__ - INFO - Server is reachable
+2025-06-04 23:34:40,447 - __main__ - INFO - WebSocket connected
+2025-06-04 23:34:40,447 - __main__ - INFO - Status: Connected - Ready for gaming! (Connected: True)
+2025-06-04 23:34:40,468 - qasync._QEventLoop - ERROR - Exception in callback <_asyncio.TaskStepMethWrapper object at 0x0000022CAF07C370>()
+handle: <Handle <_asyncio.TaskStepMethWrapper object at 0x0000022CAF07C370>()>
+Traceback (most recent call last):
+  File "C:\Python313\Lib\asyncio\events.py", line 89, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Cannot enter into task <Task pending name='websocket_handler' coro=<NetCafeClient._handle_ws_messages() running at C:\Users\pavka\Desktop\New folder (2)\client\netcafe_client.py:1194>> while another task <Task pending name='Task-1' coro=<NetCafeClient.connect_to_server() running at C:\Users\pavka\Desktop\New folder (2)\client\netcafe_client.py:970>> is being executed.
+2025-06-04 23:34:45,970 - __main__ - INFO - Authenticating user: pavka
+2025-06-04 23:34:54,112 - __main__ - INFO - 🛡️  Folder blocker uninstalled - File system access restored
+2025-06-04 23:34:54,112 - __main__ - INFO - Event loop not running, skipping async cleanup
+2025-06-04 23:34:54,153 - __main__ - INFO - Cleanup completed
+2025-06-04 23:34:54,186 - qasync._QEventLoop - ERROR - Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x0000022CAF17EF90>
+2025-06-04 23:34:54,187 - qasync._QEventLoop - ERROR - Unclosed connector
+connections: ['deque([(<aiohttp.client_proto.ResponseHandler object at 0x0000022CCAB21C70>, 1026788.4352315)])']
+connector: <aiohttp.connector.TCPConnector object at 0x0000022CAF17F0E0>
+2025-06-04 23:34:54,191 - qasync._QEventLoop - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='websocket_handler' coro=<NetCafeClient._handle_ws_messages() running at C:\Users\pavka\Desktop\New folder (2)\client\netcafe_client.py:1194>>
+2025-06-04 23:34:58,691 - __main__ - INFO - System tray initialized
+2025-06-04 23:34:58,748 - __main__ - ERROR - ❌ Failed to install keyboard blocker: SetWindowsHookEx failed: 0
+2025-06-04 23:34:58,755 - __main__ - ERROR - Error details: Traceback (most recent call last):
+  File "C:\Users\pavka\Desktop\New folder (2)\client\netcafe_client.py", line 483, in install
+    raise Exception(f"SetWindowsHookEx failed: {ctypes.get_last_error()}")
+Exception: SetWindowsHookEx failed: 0
+
+2025-06-04 23:34:58,755 - __main__ - WARNING - ⚠️  Running without administrator privileges may cause blocking to fail!
+2025-06-04 23:34:58,755 - __main__ - INFO - NetCafe Client initialized. Computer ID: DESKTOP-AU7O0H3_190032518091308
+2025-06-04 23:34:58,756 - __main__ - INFO - Status: Initializing... (Connected: False)
+2025-06-04 23:34:58,756 - __main__ - INFO - 🎮 Starting NetCafe Pro 2.0 Gaming Client
+2025-06-04 23:34:58,764 - __main__ - INFO - Connecting to server: http://192.168.7.2:8080
+2025-06-04 23:34:58,769 - __main__ - INFO - Status: Connecting to server... (Connected: False)
+2025-06-04 23:34:58,799 - __main__ - INFO - Server is reachable
+2025-06-04 23:34:58,801 - __main__ - INFO - WebSocket connected
+2025-06-04 23:34:58,802 - __main__ - INFO - Status: Connected - Ready for gaming! (Connected: True)
+2025-06-04 23:34:58,828 - qasync._QEventLoop - ERROR - Exception in callback <_asyncio.TaskStepMethWrapper object at 0x000002C92324C370>()
+handle: <Handle <_asyncio.TaskStepMethWrapper object at 0x000002C92324C370>()>
+Traceback (most recent call last):
+  File "C:\Python313\Lib\asyncio\events.py", line 89, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Cannot enter into task <Task pending name='websocket_handler' coro=<NetCafeClient._handle_ws_messages() running at C:\Users\pavka\Desktop\New folder (2)\client\netcafe_client.py:1194>> while another task <Task pending name='Task-1' coro=<NetCafeClient.connect_to_server() running at C:\Users\pavka\Desktop\New folder (2)\client\netcafe_client.py:970>> is being executed.
+2025-06-04 23:35:06,618 - __main__ - INFO - Authenticating user: admin
+2025-06-04 23:35:17,211 - __main__ - INFO - 🛡️  Folder blocker uninstalled - File system access restored
+2025-06-04 23:35:17,212 - __main__ - INFO - Event loop not running, skipping async cleanup
+2025-06-04 23:35:17,239 - __main__ - INFO - Cleanup completed
+2025-06-04 23:35:17,263 - qasync._QEventLoop - ERROR - Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x000002C9231EEF90>
+2025-06-04 23:35:17,263 - qasync._QEventLoop - ERROR - Unclosed connector
+connections: ['deque([(<aiohttp.client_proto.ResponseHandler object at 0x000002C93DBC1C70>, 1026809.0886453)])']
+connector: <aiohttp.connector.TCPConnector object at 0x000002C9231EF0E0>
+2025-06-04 23:35:17,269 - qasync._QEventLoop - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='websocket_handler' coro=<NetCafeClient._handle_ws_messages() running at C:\Users\pavka\Desktop\New folder (2)\client\netcafe_client.py:1194>>
+2025-06-04 23:35:23,811 - __main__ - INFO - System tray initialized
+2025-06-04 23:35:23,867 - __main__ - ERROR - ❌ Failed to install keyboard blocker: SetWindowsHookEx failed: 0
+2025-06-04 23:35:23,871 - __main__ - ERROR - Error details: Traceback (most recent call last):
+  File "C:\Users\pavka\Desktop\New folder (2)\client\netcafe_client.py", line 483, in install
+    raise Exception(f"SetWindowsHookEx failed: {ctypes.get_last_error()}")
+Exception: SetWindowsHookEx failed: 0
+
+2025-06-04 23:35:23,871 - __main__ - WARNING - ⚠️  Running without administrator privileges may cause blocking to fail!
+2025-06-04 23:35:23,871 - __main__ - INFO - NetCafe Client initialized. Computer ID: DESKTOP-AU7O0H3_190032518091308
+2025-06-04 23:35:23,872 - __main__ - INFO - Status: Initializing... (Connected: False)
+2025-06-04 23:35:23,872 - __main__ - INFO - 🎮 Starting NetCafe Pro 2.0 Gaming Client
+2025-06-04 23:35:23,879 - __main__ - INFO - Connecting to server: http://192.168.7.2:8080
+2025-06-04 23:35:23,880 - __main__ - INFO - Status: Connecting to server... (Connected: False)
+2025-06-04 23:35:23,913 - __main__ - INFO - Server is reachable
+2025-06-04 23:35:23,915 - __main__ - INFO - WebSocket connected
+2025-06-04 23:35:23,915 - __main__ - INFO - Status: Connected - Ready for gaming! (Connected: True)
+2025-06-04 23:35:23,936 - qasync._QEventLoop - ERROR - Exception in callback <_asyncio.TaskStepMethWrapper object at 0x000001C3DCEF11B0>()
+handle: <Handle <_asyncio.TaskStepMethWrapper object at 0x000001C3DCEF11B0>()>
+Traceback (most recent call last):
+  File "C:\Python313\Lib\asyncio\events.py", line 89, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Cannot enter into task <Task pending name='websocket_handler' coro=<NetCafeClient._handle_ws_messages() running at C:\Users\pavka\Desktop\New folder (2)\client\netcafe_client.py:1194>> while another task <Task pending name='Task-1' coro=<NetCafeClient.connect_to_server() running at C:\Users\pavka\Desktop\New folder (2)\client\netcafe_client.py:970>> is being executed.
+2025-06-04 23:35:25,113 - __main__ - INFO - Login cancelled
+2025-06-04 23:35:26,323 - __main__ - INFO - 🛡️  Folder blocker uninstalled - File system access restored
+2025-06-04 23:35:26,324 - __main__ - INFO - Event loop not running, skipping async cleanup
+2025-06-04 23:35:26,358 - __main__ - INFO - Cleanup completed
+2025-06-04 23:35:26,393 - qasync._QEventLoop - ERROR - Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x000001C3DCACEF90>
+2025-06-04 23:35:26,460 - qasync._QEventLoop - ERROR - Task was destroyed but it is pending!
+task: <Task pending name='websocket_handler' coro=<NetCafeClient._handle_ws_messages() running at C:\Users\pavka\Desktop\New folder (2)\client\netcafe_client.py:1194>>
+2025-06-04 23:43:25,154 - __main__ - INFO - System tray initialized
+2025-06-04 23:43:25,209 - __main__ - ERROR - ❌ Failed to install keyboard blocker: SetWindowsHookEx failed: 0
+2025-06-04 23:43:25,213 - __main__ - ERROR - Error details: Traceback (most recent call last):
+  File "C:\Users\pavka\Desktop\New folder (2)\client\netcafe_client.py", line 552, in install
+    raise Exception(f"SetWindowsHookEx failed: {ctypes.get_last_error()}")
+Exception: SetWindowsHookEx failed: 0
+
+2025-06-04 23:43:25,213 - __main__ - WARNING - ⚠️  Running without administrator privileges may cause blocking to fail!
+2025-06-04 23:43:25,213 - __main__ - INFO - NetCafe Client initialized. Computer ID: DESKTOP-AU7O0H3_190032518091308
+2025-06-04 23:43:25,214 - __main__ - INFO - Status: Initializing... (Connected: False)
+2025-06-04 23:43:25,214 - __main__ - INFO - 🎮 Starting NetCafe Pro 2.0 Gaming Client
+2025-06-04 23:43:25,221 - __main__ - INFO - Connecting to server: http://192.168.7.2:8080
+2025-06-04 23:43:25,223 - __main__ - INFO - Status: Connecting to server... (Connected: False)
+2025-06-04 23:43:25,253 - __main__ - INFO - Server is reachable
+2025-06-04 23:43:25,255 - __main__ - INFO - WebSocket connected
+2025-06-04 23:43:25,256 - __main__ - INFO - Status: Connected - Ready for gaming! (Connected: True)
+2025-06-04 23:43:25,258 - __main__ - INFO - 🔐 Login attempt 1/5
+2025-06-04 23:43:25,275 - qasync._QEventLoop - ERROR - Exception in callback <_asyncio.TaskStepMethWrapper object at 0x000002508C361870>()
+handle: <Handle <_asyncio.TaskStepMethWrapper object at 0x000002508C361870>()>
+Traceback (most recent call last):
+  File "C:\Python313\Lib\asyncio\events.py", line 89, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Cannot enter into task <Task pending name='websocket_handler' coro=<NetCafeClient._handle_ws_messages() running at C:\Users\pavka\Desktop\New folder (2)\client\netcafe_client.py:1329>> while another task <Task pending name='Task-1' coro=<NetCafeClient.connect_to_server() running at C:\Users\pavka\Desktop\New folder (2)\client\netcafe_client.py:1039>> is being executed.
+2025-06-04 23:43:31,265 - __main__ - INFO - 🔐 Authenticating user: PAVKA
+2025-06-04 23:43:31,281 - __main__ - WARNING - ❌ Invalid credentials for user: PAVKA
+2025-06-04 23:43:33,391 - __main__ - INFO - 🔐 Login attempt 2/5
+2025-06-04 23:43:38,434 - __main__ - INFO - 🔐 Authenticating user: pavka
+2025-06-04 23:43:38,449 - __main__ - WARNING - ❌ Invalid credentials for user: pavka
+2025-06-04 23:43:40,090 - __main__ - INFO - 🔐 Login attempt 3/5
+2025-06-04 23:43:45,206 - __main__ - INFO - 🔐 Authenticating user: admin
+2025-06-04 23:43:45,222 - __main__ - WARNING - ❌ Access denied for admin: No time available. Please contact administrator.
+2025-06-04 23:43:59,498 - __main__ - INFO - 🔐 Login attempt 4/5
+2025-06-04 23:44:02,156 - __main__ - WARNING - 🔒 SECURITY: Attempt to close login dialog blocked!
+2025-06-04 23:44:02,662 - __main__ - WARNING - 🔒 SECURITY: Attempt to close login dialog blocked!
+2025-06-04 23:44:03,640 - __main__ - WARNING - 🔒 SECURITY: Attempt to close login dialog blocked!
+2025-06-04 23:44:04,033 - __main__ - WARNING - 🔒 SECURITY: Attempt to close login dialog blocked!
+2025-06-04 23:44:04,263 - __main__ - WARNING - 🔒 SECURITY: Attempt to close login dialog blocked!
+2025-06-04 23:44:04,829 - __main__ - WARNING - 🔒 SECURITY: Attempt to close login dialog blocked!
+2025-06-04 23:44:05,114 - __main__ - WARNING - 🔒 SECURITY: Attempt to close login dialog blocked!
+2025-06-04 23:44:05,309 - __main__ - WARNING - 🔒 SECURITY: Attempt to close login dialog blocked!
+2025-06-05 00:12:31,963 - __main__ - INFO - System tray initialized
+2025-06-05 00:12:32,042 - __main__ - ERROR - ❌ Failed to install keyboard blocker: SetWindowsHookEx failed: 0
+2025-06-05 00:12:32,049 - __main__ - ERROR - Error details: Traceback (most recent call last):
+  File "C:\Users\pavka\Desktop\New folder (2)\client\netcafe_client.py", line 552, in install
+    raise Exception(f"SetWindowsHookEx failed: {ctypes.get_last_error()}")
+Exception: SetWindowsHookEx failed: 0
+
+2025-06-05 00:12:32,050 - __main__ - WARNING - ⚠️  Running without administrator privileges may cause blocking to fail!
+2025-06-05 00:12:32,051 - __main__ - INFO - NetCafe Client initialized. Computer ID: DESKTOP-AU7O0H3_190032518091308
+2025-06-05 00:12:32,051 - __main__ - INFO - Status: Initializing... (Connected: False)
+2025-06-05 00:12:32,052 - __main__ - INFO - 🎮 Starting NetCafe Pro 2.0 Gaming Client
+2025-06-05 00:12:32,062 - __main__ - INFO - Connecting to server: http://192.168.7.2:8080
+2025-06-05 00:12:32,063 - __main__ - INFO - Status: Connecting to server... (Connected: False)
+2025-06-05 00:12:32,094 - __main__ - INFO - Server is reachable
+2025-06-05 00:12:32,097 - __main__ - INFO - WebSocket connected
+2025-06-05 00:12:32,098 - __main__ - INFO - Status: Connected - Ready for gaming! (Connected: True)
+2025-06-05 00:12:32,102 - __main__ - INFO - 🔐 Login attempt 1/5
+2025-06-05 00:12:32,130 - qasync._QEventLoop - ERROR - Exception in callback <_asyncio.TaskStepMethWrapper object at 0x000001A95DD35210>()
+handle: <Handle <_asyncio.TaskStepMethWrapper object at 0x000001A95DD35210>()>
+Traceback (most recent call last):
+  File "C:\Python313\Lib\asyncio\events.py", line 89, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Cannot enter into task <Task pending name='websocket_handler' coro=<NetCafeClient._handle_ws_messages() running at C:\Users\pavka\Desktop\New folder (2)\client\netcafe_client.py:1359>> while another task <Task pending name='Task-1' coro=<NetCafeClient.connect_to_server() running at C:\Users\pavka\Desktop\New folder (2)\client\netcafe_client.py:1039>> is being executed.
+2025-06-05 00:12:39,006 - __main__ - INFO - 🔐 Authenticating user: pavka
+2025-06-05 00:12:39,024 - __main__ - WARNING - ❌ Invalid credentials for user: pavka
+2025-06-05 00:12:39,948 - __main__ - INFO - 🔐 Login attempt 2/5
+2025-06-05 00:12:44,968 - __main__ - INFO - 🔐 Authenticating user: pavka
+2025-06-05 00:12:44,984 - __main__ - WARNING - ❌ Invalid credentials for user: pavka
+2025-06-05 00:12:45,630 - __main__ - INFO - 🔐 Login attempt 3/5
+2025-06-05 00:12:51,515 - __main__ - INFO - 🔐 Authenticating user: admin
+2025-06-05 00:12:51,537 - __main__ - INFO - ✅ Login successful: admin, 1000 minutes
+2025-06-05 00:12:51,537 - __main__ - INFO - Starting session: 1000 minutes
+2025-06-05 00:12:51,548 - __main__ - ERROR - ❌ Failed to install keyboard blocker: SetWindowsHookEx failed: 0
+2025-06-05 00:12:51,550 - __main__ - ERROR - Error details: Traceback (most recent call last):
+  File "C:\Users\pavka\Desktop\New folder (2)\client\netcafe_client.py", line 552, in install
+    raise Exception(f"SetWindowsHookEx failed: {ctypes.get_last_error()}")
+Exception: SetWindowsHookEx failed: 0
+
+2025-06-05 00:12:51,551 - __main__ - WARNING - ⚠️  Running without administrator privileges may cause blocking to fail!
+2025-06-05 00:12:51,569 - __main__ - INFO - 🛡️  Folder blocker installed - File system access restricted
+2025-06-05 00:12:51,658 - __main__ - INFO - Status: 🎮 Gaming Session Active (Connected: True)
+2025-06-05 00:12:52,382 - __main__ - INFO - 🚫 Blocked folder access: explorer.exe (PID: 9952)
+2025-06-05 00:12:52,395 - __main__ - INFO - 🚫 Blocked system tool: powershell.exe (PID: 10628)
+2025-06-05 00:12:52,413 - __main__ - INFO - 🚫 Blocked system tool: powershell.exe (PID: 11728)
+2025-06-05 00:12:52,503 - __main__ - INFO - 🚫 Blocked system tool: powershell.exe (PID: 16352)
+2025-06-05 00:12:52,505 - __main__ - INFO - 🚫 Blocked system tool: taskmgr.exe (PID: 16852)
+2025-06-05 00:12:52,550 - __main__ - INFO - 🚫 Blocked system tool: boaudiocontrol.exe (PID: 19444)
+2025-06-05 00:12:52,553 - __main__ - INFO - 🚫 Blocked system tool: powershell.exe (PID: 20384)
+2025-06-05 00:12:52,620 - __main__ - INFO - 🚫 Blocked system tool: powershell.exe (PID: 27308)
+2025-06-05 00:12:52,621 - __main__ - INFO - 🚫 Blocked system tool: powershell.exe (PID: 27904)
+2025-06-05 00:12:52,624 - __main__ - INFO - 🚫 Blocked system tool: powershell.exe (PID: 30816)
+2025-06-05 00:12:52,637 - __main__ - INFO - 🚫 Blocked system tool: powershell.exe (PID: 35944)
