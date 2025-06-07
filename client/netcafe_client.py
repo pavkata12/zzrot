@@ -958,6 +958,9 @@ class NetCafeClient:
         # Start with lock screen
         self._show_lock_screen()
         
+        # Ensure lock screen is visible and active
+        QTimer.singleShot(500, self._ensure_lock_screen_visible)
+        
         logger.info(f"NetCafe Experience Simulator initialized. Computer ID: {self.computer_id}")
         
         # Set initial status
@@ -1073,6 +1076,13 @@ class NetCafeClient:
     def _show_lock_screen(self):
         self.lock_screen.show_lock()
         self.keyboard_blocker.install(lock_mode=True)  # Strict blocking on lock screen
+    
+    def _ensure_lock_screen_visible(self):
+        """Ensure lock screen is always visible when no session is active"""
+        if not self.session_active:
+            self.lock_screen.show_lock()
+            self.lock_screen.raise_()
+            self.lock_screen.activateWindow()
     
     def _hide_lock_screen(self):
         self.lock_screen.hide_lock()
@@ -1276,16 +1286,18 @@ class NetCafeClient:
         try:
             dialog = LoginDialog()
             
-            # Force dialog to appear on top of lock screen
-            # Temporarily hide lock screen to ensure dialog is visible
-            lock_was_visible = self.lock_screen.isVisible()
-            if lock_was_visible:
-                self.lock_screen.hide()
+            # Ensure lock screen is visible as background
+            self._show_lock_screen()
             
+            # Force dialog to appear on top of lock screen
             dialog.show()
             dialog.raise_()
             dialog.activateWindow()
             dialog.setFocus()
+            
+            # Give the system a moment to process window layering
+            import time
+            time.sleep(0.1)
             
             # Keep showing login until successful or user provides valid credentials
             max_attempts = 5
@@ -1339,8 +1351,8 @@ class NetCafeClient:
                 logger.warning("🔒 Maximum login attempts reached - keeping computer locked")
                 self._show_lock_screen()
             
-            # Restore lock screen if it was visible before and no successful login
-            elif lock_was_visible and not self.session_active:
+            # Always ensure lock screen is shown if no session is active
+            elif not self.session_active:
                 self._show_lock_screen()
                 
         except Exception as e:
