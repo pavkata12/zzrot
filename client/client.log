@@ -781,3 +781,24 @@ Exception: SetWindowsHookEx failed: 0
 2025-06-08 00:05:09,092 - __main__ - INFO - Trying next host: 127.0.0.1
 2025-06-08 00:05:09,094 - __main__ - INFO - Status: Connection failed (attempt 2) (Connected: False)
 2025-06-08 00:05:09,095 - __main__ - INFO - Reconnecting in 11.0s
+2025-06-08 02:05:25,706 - __main__ - INFO - System tray initialized
+2025-06-08 02:05:25,777 - __main__ - ERROR - ❌ Keyboard hook failed: SetWindowsHookEx failed with error code: 0
+2025-06-08 02:05:25,778 - __main__ - WARNING - 🔄 Trying alternative blocking methods...
+2025-06-08 02:05:26,341 - __main__ - INFO - 🔪 Killed Windows Task View processes
+2025-06-08 02:05:26,342 - __main__ - WARNING - Registry blocking failed: [WinError 5] Access is denied
+2025-06-08 02:05:26,343 - __main__ - INFO - 🎯 Message interceptor installed on desktop window
+2025-06-08 02:05:26,345 - __main__ - INFO - 🫥 Hidden window from Alt+Tab: NetCafe Admin GUI
+2025-06-08 02:05:26,348 - __main__ - INFO - 🫥 Hidden window from Alt+Tab: 🎮 NetCafe Pro 2.0 - Administration Panel
+2025-06-08 02:05:26,349 - __main__ - INFO - 🫥 Hidden window from Alt+Tab: NetCafe Server API
+2025-06-08 02:05:26,350 - __main__ - INFO - 🚀 NUCLEAR BLOCKING ACTIVATED:
+2025-06-08 02:05:26,350 - __main__ - INFO -    - Explorer Task View disabled
+2025-06-08 02:05:26,351 - __main__ - INFO -    - Aggressive process monitoring
+2025-06-08 02:05:26,351 - __main__ - INFO -    - Registry-based blocking
+2025-06-08 02:05:26,351 - __main__ - INFO -    - Message interceptor active
+2025-06-08 02:05:26,352 - __main__ - INFO -    - Hidden from Alt+Tab completely
+2025-06-08 02:05:26,352 - __main__ - INFO - ✅ Alternative blocking methods activated!
+2025-06-08 02:05:26,355 - __main__ - INFO - NetCafe Experience Simulator initialized. Computer ID: DESKTOP-AU7O0H3_190032518091308
+2025-06-08 02:05:26,356 - __main__ - INFO - Status: Initializing... (Connected: False)
+2025-06-08 02:05:26,357 - __main__ - INFO - 🎮 Starting NetCafe Pro 2.0 Gaming Client
+2025-06-08 02:05:26,370 - __main__ - INFO - Connecting to server: http://192.168.7.2:8080
+2025-06-08 02:05:26,371 - __main__ - INFO - Status: Connecting to server... (Connected: False)

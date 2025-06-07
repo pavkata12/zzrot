@@ -833,8 +833,8 @@ class KeyboardBlocker:
                 
             except Exception as e:
                 logger.warning(f"Registry blocking failed: {e}")
-                
-                 except Exception as e:
+        
+        except Exception as e:
             logger.error(f"Registry method failed: {e}")
     
     def _install_message_interceptor(self):
