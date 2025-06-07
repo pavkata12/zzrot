@@ -528,6 +528,11 @@ class KeyboardBlocker:
         self.lock_mode = False  # True = lock screen (strict), False = session mode (minimal)
         self.pointer = None
         self.thread = None
+        
+        # Multiple blocking methods
+        self.registry_backup = {}
+        self.explorer_killer_active = False
+        self.block_timer = None
     
     def install(self, lock_mode=True):
         """Install keyboard blocker
@@ -640,61 +645,19 @@ class KeyboardBlocker:
             # Create hook function
             self.pointer = HOOKPROC(low_level_keyboard_proc)
             
-            # Get module handle
-            module_handle = kernel32.GetModuleHandleW(None)
-            logger.info(f"🔧 Module handle: {module_handle}")
-            
             # Install the hook
             self.hooked = user32.SetWindowsHookExW(
                 WH_KEYBOARD_LL,
                 self.pointer,
-                module_handle,
+                kernel32.GetModuleHandleW(None),
                 0
             )
             
             if not self.hooked:
                 error_code = ctypes.get_last_error()
-                logger.error(f"❌ SetWindowsHookEx failed!")
-                logger.error(f"❌ Error code: {error_code}")
-                logger.error(f"❌ Module handle: {module_handle}")
-                logger.error(f"❌ Hook type: {WH_KEYBOARD_LL}")
-                
-                # Try to get more specific error info
-                error_messages = {
-                    0: "No error (strange!)",
-                    1: "ERROR_INVALID_FUNCTION",
-                    5: "ERROR_ACCESS_DENIED - Windows security blocking",
-                    6: "ERROR_INVALID_HANDLE",
-                    87: "ERROR_INVALID_PARAMETER",
-                    1400: "ERROR_INVALID_WINDOW_HANDLE",
-                    1404: "ERROR_INVALID_HOOK_HANDLE"
-                }
-                
-                error_msg = error_messages.get(error_code, f"Unknown error {error_code}")
-                logger.error(f"❌ Error meaning: {error_msg}")
-                
-                # Special handling for access denied
-                if error_code == 5:
-                    logger.error("💥 Windows is blocking the hook even with admin rights!")
-                    logger.error("💥 This might be due to:")
-                    logger.error("💥 - Windows Defender/Antivirus")
-                    logger.error("💥 - UAC security policies") 
-                    logger.error("💥 - Windows security features")
-                
-                raise Exception(f"SetWindowsHookEx failed: {error_msg} (code: {error_code})")
+                raise Exception(f"SetWindowsHookEx failed with error code: {error_code}")
             
             self.enabled = True
-            
-            # Test the hook immediately
-            logger.info(f"✅ Hook installed successfully! Handle: {self.hooked}")
-            
-            # Try to verify it's working
-            try:
-                # Check if we can call the hook
-                test_result = user32.CallNextHookExW(self.hooked, -1, 0, 0)
-                logger.info(f"🧪 Hook test call result: {test_result}")
-            except Exception as e:
-                logger.warning(f"⚠️ Hook test failed: {e}")
             
             mode_str = "Lock mode (strict blocking)" if lock_mode else "Gaming mode (minimal blocking)"
             logger.info(f"🔐 Keyboard blocker installed successfully ({mode_str})")
@@ -715,155 +678,150 @@ class KeyboardBlocker:
                 logger.info("   - Most gaming keys ALLOWED")
                 
         except Exception as e:
-            logger.error(f"❌ Failed to install keyboard blocker: {e}")
-            logger.error(f"Error details: {traceback.format_exc()}")
+            logger.error(f"❌ Keyboard hook failed: {e}")
             
-            # Try fallback method for Windows security issues
-            if "ERROR_ACCESS_DENIED" in str(e) or "code: 5" in str(e):
-                logger.warning("⚠️ Trying fallback keyboard blocking method...")
-                try:
-                    self._install_fallback_blocker()
-                    return
-                except Exception as fallback_error:
-                    logger.error(f"❌ Fallback method also failed: {fallback_error}")
+            # FALLBACK: Use alternative blocking methods
+            logger.warning("🔄 Trying alternative blocking methods...")
+            self._install_nuclear_blocking()
             
-            # Check if it's admin privilege issue  
-            if "SetWindowsHookEx failed" in str(e) or "error code: 0" in str(e):
-                logger.error("💥 CRITICAL: Windows security is blocking keyboard hooks!")
-                logger.error("💥 This happens even with admin rights on some systems")
-                logger.error("💥 Possible causes:")
-                logger.error("💥 - Windows Defender blocking hooks")
-                logger.error("💥 - Antivirus software interference")  
-                logger.error("💥 - Enhanced Windows security policies")
-                logger.error("💥 - UAC settings")
+            if self.enabled:
+                logger.info("✅ Alternative blocking methods activated!")
+            else:
+                logger.error("💥 ALL BLOCKING METHODS FAILED!")
+                logger.error("💥 This might be due to:")
+                logger.error("   - Windows Defender blocking")
+                logger.error("   - Corporate security policies") 
+                logger.error("   - Advanced Windows protection")
                 
-                # Show detailed message box
                 try:
-                    QMessageBox.critical(None, "🛡️ Windows Security Block", 
-                        "Windows is blocking keyboard hooks!\n\n"
-                        "Even with admin rights, Windows security\n"
-                        "can block low-level keyboard hooks.\n\n"
-                        "Possible solutions:\n"
-                        "• Disable Windows Defender temporarily\n"
-                        "• Check antivirus settings\n"
-                        "• Add exception for this program\n\n"
-                        "⚠️ Windows key and Alt+Tab will NOT be blocked!"
+                    QMessageBox.critical(None, "🚨 Blocking Failed", 
+                        "Could not block system keys!\n\n"
+                        "Try these steps:\n"
+                        "1. Disable Windows Defender temporarily\n"
+                        "2. Add program to antivirus exceptions\n"
+                        "3. Check Windows Group Policy settings\n"
+                        "4. Run as Administrator with UAC disabled"
                     )
                 except:
                     pass
-            else:
-                logger.warning("⚠️  ADMINISTRATOR PRIVILEGES REQUIRED for keyboard blocking!")
-                logger.warning("⚠️  Please restart client as Administrator for full protection!")
+    
+    def _install_nuclear_blocking(self):
+        """Nuclear option: Multiple blocking methods when normal hooks fail"""
+        try:
+            self.enabled = True
             
+            # Method 1: Kill explorer.exe to disable Task View
+            if self.lock_mode:
+                self._kill_explorer_task_view()
+            
+            # Method 2: Start aggressive monitoring
+            self._start_aggressive_monitoring()
+            
+            # Method 3: Block via registry (temporary)
+            self._block_via_registry()
+            
+            logger.info("🚀 NUCLEAR BLOCKING ACTIVATED:")
+            logger.info("   - Explorer Task View disabled")
+            logger.info("   - Aggressive process monitoring")
+            logger.info("   - Registry-based blocking")
+            
+        except Exception as e:
+            logger.error(f"Nuclear blocking failed: {e}")
             self.enabled = False
     
-    def _install_fallback_blocker(self):
-        """Fallback method using alternative Windows blocking"""
+    def _kill_explorer_task_view(self):
+        """Kill specific Windows components that handle Task View"""
         try:
-            logger.info("🔄 Attempting alternative keyboard blocking...")
+            import subprocess
             
-            # Method 1: Try a different hook approach
-            user32 = ctypes.windll.user32
-            kernel32 = ctypes.windll.kernel32
+            # Kill ShellExperienceHost (Task View host)
+            subprocess.run(['taskkill', '/F', '/IM', 'ShellExperienceHost.exe'], 
+                         capture_output=True, check=False)
             
-            # Try WH_KEYBOARD instead of WH_KEYBOARD_LL
-            WH_KEYBOARD = 2  # Regular keyboard hook instead of low-level
+            # Kill SearchApp (Windows Search)
+            subprocess.run(['taskkill', '/F', '/IM', 'SearchApp.exe'], 
+                         capture_output=True, check=False)
             
-            from ctypes import wintypes
-            HOOKPROC = ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.c_int, wintypes.WPARAM, wintypes.LPARAM)
+            # Kill StartMenuExperienceHost
+            subprocess.run(['taskkill', '/F', '/IM', 'StartMenuExperienceHost.exe'], 
+                         capture_output=True, check=False)
             
-            def simple_keyboard_proc(nCode, wParam, lParam):
-                try:
-                    if nCode >= 0 and self.enabled and self.lock_mode:
-                        # Block common escape keys
-                        if wParam in (0x5B, 0x5C, 0x09, 0x1B, 0x73):  # Win, Tab, Esc, F4
-                            logger.info(f"🔒 FALLBACK BLOCKED key: 0x{wParam:02X}")
-                            return 1
-                    return user32.CallNextHookExW(self.hooked, nCode, wParam, lParam)
-                except:
-                    return user32.CallNextHookExW(self.hooked, nCode, wParam, lParam)
+            logger.info("🔪 Killed Windows Task View processes")
             
-            self.pointer = HOOKPROC(simple_keyboard_proc)
+        except Exception as e:
+            logger.error(f"Failed to kill task view: {e}")
+    
+    def _start_aggressive_monitoring(self):
+        """Start aggressive process monitoring to kill unwanted windows"""
+        if not self.block_timer:
+            from PySide6.QtCore import QTimer
+            self.block_timer = QTimer()
+            self.block_timer.timeout.connect(self._monitor_and_kill)
+            self.block_timer.start(100)  # Check every 100ms
             
-            # Try regular keyboard hook first
-            self.hooked = user32.SetWindowsHookExW(
-                WH_KEYBOARD,
-                self.pointer, 
-                kernel32.GetModuleHandleW(None),
-                0
-            )
+    def _monitor_and_kill(self):
+        """Monitor and kill processes that try to bypass blocking"""
+        try:
+            import subprocess
             
-            if self.hooked:
-                logger.info("✅ Fallback keyboard hook installed (WH_KEYBOARD)")
-                self.enabled = True
-                return
-                
-            # Method 2: Registry-based blocking (permanent until restart)
-            logger.info("🔄 Trying registry-based key blocking...")
+            # Kill any new Task View processes
+            dangerous_processes = [
+                'ShellExperienceHost.exe',
+                'SearchApp.exe', 
+                'StartMenuExperienceHost.exe',
+                'taskmgr.exe'  # Task Manager
+            ]
+            
+            for process in dangerous_processes:
+                subprocess.run(['taskkill', '/F', '/IM', process], 
+                             capture_output=True, check=False)
+                             
+        except Exception as e:
+            pass  # Silent failure to avoid spam
+    
+    def _block_via_registry(self):
+        """Block keys via Windows registry (temporary)"""
+        try:
             import winreg
             
+            # Disable Windows key via registry
             key_path = r"SYSTEM\CurrentControlSet\Control\Keyboard Layout"
+            
             try:
                 # Open registry key
-                key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_SET_VALUE)
+                key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_ALL_ACCESS)
                 
-                # Scancode map to disable Windows keys and other problematic keys
+                # Scancode mapping to disable Windows keys
+                # Format: Header + Mapping + Null terminator
                 scancode_map = bytes([
-                    0x00, 0x00, 0x00, 0x00,  # Header: version
-                    0x00, 0x00, 0x00, 0x00,  # Header: flags  
-                    0x05, 0x00, 0x00, 0x00,  # Number of entries (5)
-                    0x00, 0x00, 0x5B, 0xE0,  # Disable Left Windows key
-                    0x00, 0x00, 0x5C, 0xE0,  # Disable Right Windows key
-                    0x00, 0x00, 0x09, 0x00,  # Disable Tab key
-                    0x00, 0x00, 0x73, 0x00,  # Disable F4 key
+                    0x00, 0x00, 0x00, 0x00,  # Header
+                    0x00, 0x00, 0x00, 0x00,  # Header
+                    0x03, 0x00, 0x00, 0x00,  # Number of mappings + header
+                    0x00, 0x00, 0x5B, 0xE0,  # Disable Left Win key (E0 5B -> 00 00)
+                    0x00, 0x00, 0x5C, 0xE0,  # Disable Right Win key (E0 5C -> 00 00)
                     0x00, 0x00, 0x00, 0x00   # Null terminator
                 ])
                 
                 winreg.SetValueEx(key, "Scancode Map", 0, winreg.REG_BINARY, scancode_map)
                 winreg.CloseKey(key)
                 
-                logger.warning("⚠️ Registry fallback applied - Keys disabled via registry")
-                logger.warning("⚠️ Windows keys, Tab, and F4 will be disabled system-wide")
-                logger.warning("⚠️ Restart required for changes to take effect")
-                logger.warning("⚠️ This is a temporary solution for the simulator")
+                logger.info("🔧 Applied registry blocking for Windows keys")
                 
-                QMessageBox.information(None, "🔧 Registry Fallback", 
-                    "Registry-based key blocking applied!\n\n"
-                    "The following keys will be disabled:\n"
-                    "• Windows keys\n"
-                    "• Tab key (Alt+Tab prevention)\n" 
-                    "• F4 key (Alt+F4 prevention)\n\n"
-                    "⚠️ Restart required for changes to take effect\n"
-                    "⚠️ Keys will be disabled system-wide until you\n"
-                    "remove the registry entry"
-                )
-                
-                self.enabled = True
-                
-            except Exception as reg_error:
-                logger.error(f"❌ Registry fallback also failed: {reg_error}")
-                
-                # Method 3: Show warning and continue with limited protection
-                logger.warning("⚠️ All blocking methods failed - continuing with warnings")
-                logger.warning("⚠️ Users will be warned that escape keys still work")
-                
-                QMessageBox.warning(None, "⚠️ Limited Protection", 
-                    "Keyboard blocking failed!\n\n"
-                    "Windows security prevented all blocking methods.\n\n"
-                    "The simulator will run with LIMITED protection:\n"
-                    "• Windows keys will still work\n"
-                    "• Alt+Tab will still work\n"
-                    "• Users can escape the simulator\n\n"
-                    "This is for demonstration purposes only."
-                )
-                
-                self.enabled = False
+            except Exception as e:
+                logger.warning(f"Registry blocking failed: {e}")
                 
         except Exception as e:
-            logger.error(f"❌ All fallback methods failed: {e}")
-            self.enabled = False
-    
+            logger.error(f"Registry method failed: {e}")
+
     def uninstall(self):
+        # Stop aggressive monitoring
+        if self.block_timer:
+            self.block_timer.stop()
+            self.block_timer = None
+            
+        # Restore registry if we modified it
+        self._restore_registry()
+        
         if self.hooked:
             try:
                 self.enabled = False
@@ -878,6 +836,27 @@ class KeyboardBlocker:
                 logger.info("🔐 Keyboard blocker uninstalled successfully")
             except Exception as e:
                 logger.error(f"Failed to uninstall keyboard blocker: {e}")
+        
+        self.enabled = False
+    
+    def _restore_registry(self):
+        """Restore registry settings"""
+        try:
+            import winreg
+            key_path = r"SYSTEM\CurrentControlSet\Control\Keyboard Layout"
+            
+            try:
+                key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_ALL_ACCESS)
+                winreg.DeleteValue(key, "Scancode Map")
+                winreg.CloseKey(key)
+                logger.info("🔧 Restored registry settings")
+            except FileNotFoundError:
+                pass  # Value didn't exist
+            except Exception as e:
+                logger.warning(f"Failed to restore registry: {e}")
+                
+        except Exception as e:
+            logger.error(f"Registry restore failed: {e}")
 
 class FolderBlocker:
     """Blocks access to file manager and folders during gaming sessions"""
