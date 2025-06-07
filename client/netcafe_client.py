@@ -758,15 +758,48 @@ class KeyboardBlocker:
             self.enabled = False
     
     def _install_fallback_blocker(self):
-        """Fallback method using Windows API to disable keys"""
+        """Fallback method using alternative Windows blocking"""
         try:
-            logger.info("🔄 Attempting fallback keyboard blocking...")
+            logger.info("🔄 Attempting alternative keyboard blocking...")
             
-            # This is a less effective but sometimes working method
-            # Block specific keys using BlockInput (limited effectiveness)
+            # Method 1: Try a different hook approach
             user32 = ctypes.windll.user32
+            kernel32 = ctypes.windll.kernel32
             
-            # Try to disable specific keys via registry (requires restart)
+            # Try WH_KEYBOARD instead of WH_KEYBOARD_LL
+            WH_KEYBOARD = 2  # Regular keyboard hook instead of low-level
+            
+            from ctypes import wintypes
+            HOOKPROC = ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.c_int, wintypes.WPARAM, wintypes.LPARAM)
+            
+            def simple_keyboard_proc(nCode, wParam, lParam):
+                try:
+                    if nCode >= 0 and self.enabled and self.lock_mode:
+                        # Block common escape keys
+                        if wParam in (0x5B, 0x5C, 0x09, 0x1B, 0x73):  # Win, Tab, Esc, F4
+                            logger.info(f"🔒 FALLBACK BLOCKED key: 0x{wParam:02X}")
+                            return 1
+                    return user32.CallNextHookExW(self.hooked, nCode, wParam, lParam)
+                except:
+                    return user32.CallNextHookExW(self.hooked, nCode, wParam, lParam)
+            
+            self.pointer = HOOKPROC(simple_keyboard_proc)
+            
+            # Try regular keyboard hook first
+            self.hooked = user32.SetWindowsHookExW(
+                WH_KEYBOARD,
+                self.pointer, 
+                kernel32.GetModuleHandleW(None),
+                0
+            )
+            
+            if self.hooked:
+                logger.info("✅ Fallback keyboard hook installed (WH_KEYBOARD)")
+                self.enabled = True
+                return
+                
+            # Method 2: Registry-based blocking (permanent until restart)
+            logger.info("🔄 Trying registry-based key blocking...")
             import winreg
             
             key_path = r"SYSTEM\CurrentControlSet\Control\Keyboard Layout"
@@ -774,38 +807,61 @@ class KeyboardBlocker:
                 # Open registry key
                 key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_SET_VALUE)
                 
-                # This is a scancode map to disable Windows keys
-                # Format: header + map entries + null terminator
+                # Scancode map to disable Windows keys and other problematic keys
                 scancode_map = bytes([
                     0x00, 0x00, 0x00, 0x00,  # Header: version
                     0x00, 0x00, 0x00, 0x00,  # Header: flags  
-                    0x03, 0x00, 0x00, 0x00,  # Number of entries (3)
+                    0x05, 0x00, 0x00, 0x00,  # Number of entries (5)
                     0x00, 0x00, 0x5B, 0xE0,  # Disable Left Windows key
                     0x00, 0x00, 0x5C, 0xE0,  # Disable Right Windows key
+                    0x00, 0x00, 0x09, 0x00,  # Disable Tab key
+                    0x00, 0x00, 0x73, 0x00,  # Disable F4 key
                     0x00, 0x00, 0x00, 0x00   # Null terminator
                 ])
                 
                 winreg.SetValueEx(key, "Scancode Map", 0, winreg.REG_BINARY, scancode_map)
                 winreg.CloseKey(key)
                 
-                logger.warning("⚠️ Fallback method applied - Windows keys disabled via registry")
-                logger.warning("⚠️ Changes will take effect after system restart")
-                logger.warning("⚠️ Alt+Tab may still work")
+                logger.warning("⚠️ Registry fallback applied - Keys disabled via registry")
+                logger.warning("⚠️ Windows keys, Tab, and F4 will be disabled system-wide")
+                logger.warning("⚠️ Restart required for changes to take effect")
+                logger.warning("⚠️ This is a temporary solution for the simulator")
+                
+                QMessageBox.information(None, "🔧 Registry Fallback", 
+                    "Registry-based key blocking applied!\n\n"
+                    "The following keys will be disabled:\n"
+                    "• Windows keys\n"
+                    "• Tab key (Alt+Tab prevention)\n" 
+                    "• F4 key (Alt+F4 prevention)\n\n"
+                    "⚠️ Restart required for changes to take effect\n"
+                    "⚠️ Keys will be disabled system-wide until you\n"
+                    "remove the registry entry"
+                )
                 
                 self.enabled = True
                 
             except Exception as reg_error:
-                logger.error(f"❌ Registry fallback failed: {reg_error}")
+                logger.error(f"❌ Registry fallback also failed: {reg_error}")
                 
-                # Last resort: Show warning and continue without blocking
-                logger.error("❌ All keyboard blocking methods failed!")
-                logger.error("❌ Simulator will run WITHOUT keyboard protection!")
+                # Method 3: Show warning and continue with limited protection
+                logger.warning("⚠️ All blocking methods failed - continuing with warnings")
+                logger.warning("⚠️ Users will be warned that escape keys still work")
+                
+                QMessageBox.warning(None, "⚠️ Limited Protection", 
+                    "Keyboard blocking failed!\n\n"
+                    "Windows security prevented all blocking methods.\n\n"
+                    "The simulator will run with LIMITED protection:\n"
+                    "• Windows keys will still work\n"
+                    "• Alt+Tab will still work\n"
+                    "• Users can escape the simulator\n\n"
+                    "This is for demonstration purposes only."
+                )
                 
                 self.enabled = False
                 
         except Exception as e:
-            logger.error(f"❌ Fallback blocker failed: {e}")
-            raise
+            logger.error(f"❌ All fallback methods failed: {e}")
+            self.enabled = False
     
     def uninstall(self):
         if self.hooked:
