@@ -366,9 +366,7 @@ class LoginDialog(QDialog):
         self.setWindowFlags(
             Qt.Dialog | 
             Qt.WindowStaysOnTopHint | 
-            Qt.CustomizeWindowHint |  # This removes close button
-            Qt.WindowTitleHint |      # Keep title bar but no close button
-            Qt.WindowSystemMenuHint |  # Keep system menu but no close
+            Qt.FramelessWindowHint |  # Remove title bar completely
             Qt.Tool  # Tool windows appear above normal windows
         )
         
@@ -384,8 +382,10 @@ class LoginDialog(QDialog):
             QDialog {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
                     stop:0 #1a1a2e, stop:1 #16213e);
-                border-radius: 12px;
-                border: 3px solid rgba(0,255,136,0.5);
+                border-radius: 16px;
+                border: 4px solid rgba(0,255,136,0.8);
+                margin: 0px;
+                padding: 20px;
             }
             QLabel {
                 color: white;
@@ -557,91 +557,84 @@ class KeyboardBlocker:
             
             def low_level_keyboard_proc(nCode, wParam, lParam):
                 try:
-                    if not self.enabled or nCode < 0:
+                    if not self.enabled:
                         return user32.CallNextHookExW(self.hooked, nCode, wParam, lParam)
                     
-                    if nCode == 0:  # HC_ACTION
-                        # Get virtual key code from lParam structure
-                        vk_code = ctypes.cast(lParam, ctypes.POINTER(wintypes.DWORD))[0]
+                    # Only process if nCode is HC_ACTION (0)
+                    if nCode == 0:
+                        # Get key info from lParam
+                        class KBDLLHOOKSTRUCT(ctypes.Structure):
+                            _fields_ = [("vkCode", wintypes.DWORD),
+                                       ("scanCode", wintypes.DWORD),
+                                       ("flags", wintypes.DWORD),
+                                       ("time", wintypes.DWORD),
+                                       ("dwExtraInfo", ctypes.POINTER(wintypes.ULONG))]
                         
-                        # Only process key down events
+                        kb_struct = ctypes.cast(lParam, ctypes.POINTER(KBDLLHOOKSTRUCT)).contents
+                        vk_code = kb_struct.vkCode
+                        
+                        # Process key down and system key down events
                         if wParam in (WM_KEYDOWN, WM_SYSKEYDOWN):
                             
                             # Lock mode: Strict blocking when computer is locked
                             if self.lock_mode:
-                                # Block Windows keys (Left: 0x5B, Right: 0x5C)
-                                if vk_code in (0x5B, 0x5C):
-                                    logger.info(f"🔒 BLOCKED Windows key (VK: {hex(vk_code)})")
-                                    return 1
-                                
-                                # Block Tab key completely (catches Alt+Tab)
-                                if vk_code == 0x09:
-                                    logger.info("🔒 BLOCKED Tab key (Alt+Tab prevention)")
-                                    return 1
-                                
-                                # Block F4 key completely (catches Alt+F4)
-                                if vk_code == 0x73:
-                                    logger.info("🔒 BLOCKED F4 key (Alt+F4 prevention)")
-                                    return 1
-                                
-                                # Block Escape key completely (catches Ctrl+Esc)
-                                if vk_code == 0x1B:
-                                    logger.info("🔒 BLOCKED Escape key (system menu prevention)")
-                                    return 1
-                                
-                                # Block additional system keys
-                                blocked_keys = {
-                                    0x5D: "Menu/Context key",
+                                # ALWAYS block these keys in lock mode
+                                critical_blocks = {
+                                    0x5B: "Left Windows key",
+                                    0x5C: "Right Windows key", 
+                                    0x09: "Tab key (prevents Alt+Tab)",
+                                    0x73: "F4 key (prevents Alt+F4)",
+                                    0x1B: "Escape key (prevents Ctrl+Esc)",
+                                    0x12: "Alt key",
+                                    0xA4: "Left Alt key",
+                                    0xA5: "Right Alt key",
+                                    0x11: "Ctrl key", 
+                                    0xA2: "Left Ctrl key",
+                                    0xA3: "Right Ctrl key",
+                                    0x5D: "Menu key",
                                     0x2C: "Print Screen",
                                     0x91: "Scroll Lock",
-                                    0x13: "Pause/Break",
-                                    0x2D: "Insert",
-                                    0x2E: "Delete",
-                                    0x24: "Home",
-                                    0x23: "End",
-                                    0x21: "Page Up",
-                                    0x22: "Page Down"
+                                    0x13: "Pause key"
                                 }
                                 
-                                if vk_code in blocked_keys:
-                                    logger.info(f"🔒 BLOCKED {blocked_keys[vk_code]} key")
+                                if vk_code in critical_blocks:
+                                    logger.info(f"🔒 BLOCKED: {critical_blocks[vk_code]} (0x{vk_code:02X})")
+                                    return 1  # Block the key
+                                
+                                # Block all function keys F1-F12
+                                if 0x70 <= vk_code <= 0x7B:
+                                    logger.info(f"🔒 BLOCKED: F{vk_code - 0x6F} key")
                                     return 1
                                 
-                                # Block Alt key itself to prevent Alt+anything
-                                if vk_code in (0x12, 0xA4, 0xA5):  # Alt, Left Alt, Right Alt
-                                    logger.info("🔒 BLOCKED Alt key")
-                                    return 1
-                                
-                                # Block Ctrl key to prevent Ctrl+anything
-                                if vk_code in (0x11, 0xA2, 0xA3):  # Ctrl, Left Ctrl, Right Ctrl
-                                    logger.info("🔒 BLOCKED Ctrl key")
-                                    return 1
-                                
-                                # Block function keys
-                                if 0x70 <= vk_code <= 0x87:  # F1-F24
-                                    logger.info(f"🔒 BLOCKED F{vk_code - 0x6F} key")
+                                # Block additional navigation keys
+                                nav_keys = {
+                                    0x24: "Home", 0x23: "End", 0x21: "Page Up", 0x22: "Page Down",
+                                    0x2D: "Insert", 0x2E: "Delete"
+                                }
+                                if vk_code in nav_keys:
+                                    logger.info(f"🔒 BLOCKED: {nav_keys[vk_code]} key")
                                     return 1
                             
-                            # Session mode: Minimal blocking - let users game normally
+                            # Session mode: Only block dangerous combinations
                             else:
-                                # Only block specific dangerous combinations during gaming
-                                
-                                # Block Ctrl+Shift+Esc (Task Manager)
-                                if (vk_code == 0x1B and 
-                                    user32.GetAsyncKeyState(0x11) & 0x8000 and  # Ctrl
-                                    user32.GetAsyncKeyState(0x10) & 0x8000):    # Shift
-                                    logger.info("🎮 BLOCKED Ctrl+Shift+Esc during gaming")
+                                # Block Windows keys even during gaming
+                                if vk_code in (0x5B, 0x5C):
+                                    logger.info(f"🎮 BLOCKED: Windows key during session")
                                     return 1
                                 
-                                # Block Windows keys during gaming too
-                                if vk_code in (0x5B, 0x5C):
-                                    logger.info(f"🎮 BLOCKED Windows key during gaming")
+                                # Block Ctrl+Shift+Esc specifically
+                                if (vk_code == 0x1B and 
+                                    (user32.GetAsyncKeyState(0x11) & 0x8000) and  # Ctrl
+                                    (user32.GetAsyncKeyState(0x10) & 0x8000)):    # Shift
+                                    logger.info("🎮 BLOCKED: Ctrl+Shift+Esc (Task Manager)")
                                     return 1
                     
+                    # Allow other keys to pass through
                     return user32.CallNextHookExW(self.hooked, nCode, wParam, lParam)
                     
                 except Exception as e:
-                    logger.error(f"Hook procedure error: {e}")
+                    logger.error(f"❌ Hook error: {e}")
+                    # On error, let the key through to avoid system freeze
                     return user32.CallNextHookExW(self.hooked, nCode, wParam, lParam)
             
             # Create hook function
@@ -682,8 +675,27 @@ class KeyboardBlocker:
         except Exception as e:
             logger.error(f"❌ Failed to install keyboard blocker: {e}")
             logger.error(f"Error details: {traceback.format_exc()}")
-            logger.warning("⚠️  ADMINISTRATOR PRIVILEGES REQUIRED for keyboard blocking!")
-            logger.warning("⚠️  Please restart client as Administrator for full protection!")
+            
+            # Check if it's admin privilege issue
+            if "SetWindowsHookEx failed" in str(e) or "error code: 0" in str(e):
+                logger.error("💥 CRITICAL: Administrator privileges required!")
+                logger.error("💥 Windows key and Alt+Tab will NOT be blocked!")
+                logger.error("💥 Please close client and run START_CLIENT_AS_ADMIN.bat")
+                
+                # Show urgent message box
+                try:
+                    QMessageBox.critical(None, "🚨 Admin Required", 
+                        "Administrator privileges required!\n\n"
+                        "Windows key and Alt+Tab are NOT blocked!\n\n"
+                        "Please close and run:\n"
+                        "START_CLIENT_AS_ADMIN.bat"
+                    )
+                except:
+                    pass
+            else:
+                logger.warning("⚠️  ADMINISTRATOR PRIVILEGES REQUIRED for keyboard blocking!")
+                logger.warning("⚠️  Please restart client as Administrator for full protection!")
+            
             self.enabled = False
     
     def uninstall(self):
