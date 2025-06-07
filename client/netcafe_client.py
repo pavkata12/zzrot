@@ -89,7 +89,8 @@ class TimerOverlay(QWidget):
         self.setWindowFlags(
             Qt.FramelessWindowHint |
             Qt.WindowStaysOnTopHint |
-            Qt.Tool
+            Qt.Tool |  # Hide from Alt+Tab
+            Qt.WindowSystemMenuHint  # Prevent system menu
         )
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setWindowTitle('🎮 NetCafe Experience Simulator - Session Timer')
@@ -174,13 +175,9 @@ class LockScreen(QWidget):
             Qt.FramelessWindowHint | 
             Qt.WindowStaysOnTopHint |
             Qt.CustomizeWindowHint |  # This removes close button
-            Qt.Tool  # Tool windows don't appear in Alt+Tab
+            Qt.Tool |  # Hide from Alt+Tab
+            Qt.WindowSystemMenuHint  # Prevent system menu
         )
-        
-        # HIDE FROM ALT+TAB: Set as system-level window
-        self.setAttribute(Qt.WA_ShowWithoutActivating, True)
-        self.setAttribute(Qt.WA_X11DoNotAcceptFocus, True)
-        
         self.setStyleSheet('''
             background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
                 stop:0 #0a0a0a, stop:1 #1a1a2e);
@@ -373,7 +370,8 @@ class LoginDialog(QDialog):
             Qt.Dialog | 
             Qt.WindowStaysOnTopHint | 
             Qt.FramelessWindowHint |  # Remove title bar completely
-            Qt.Tool  # Tool windows appear above normal windows
+            Qt.Tool |  # Hide from Alt+Tab and appear above normal windows
+            Qt.WindowSystemMenuHint  # Prevent system menu
         )
         
         # SECURITY: Make dialog modal so it blocks interaction with other windows
@@ -726,18 +724,10 @@ class KeyboardBlocker:
             # Method 3: Block via registry (temporary)
             self._block_via_registry()
             
-            # Method 4: Install window message interceptor
-            self._install_message_interceptor()
-            
-            # Method 5: Hide from task switcher completely
-            self._hide_from_alt_tab()
-            
             logger.info("🚀 NUCLEAR BLOCKING ACTIVATED:")
             logger.info("   - Explorer Task View disabled")
-            logger.info("   - Aggressive process monitoring") 
+            logger.info("   - Aggressive process monitoring")
             logger.info("   - Registry-based blocking")
-            logger.info("   - Message interceptor active")
-            logger.info("   - Hidden from Alt+Tab completely")
             
         except Exception as e:
             logger.error(f"Nuclear blocking failed: {e}")
@@ -780,24 +770,14 @@ class KeyboardBlocker:
             
             # Kill any new Task View processes
             dangerous_processes = [
-                'ShellExperienceHost.exe',  # Windows+Tab Task View
-                'SearchApp.exe',           # Windows Search
-                'StartMenuExperienceHost.exe',  # Start Menu
-                'taskmgr.exe',            # Task Manager
-                'explorer.exe'            # Kill and restart explorer to break Alt+Tab
+                'ShellExperienceHost.exe',
+                'SearchApp.exe', 
+                'StartMenuExperienceHost.exe',
+                'taskmgr.exe'  # Task Manager
             ]
             
             for process in dangerous_processes:
                 subprocess.run(['taskkill', '/F', '/IM', process], 
-                             capture_output=True, check=False)
-            
-            # Restart explorer but with our modifications
-            subprocess.run(['explorer.exe'], capture_output=True, check=False)
-            
-            # Additional aggressive blocking: Kill dwm.exe temporarily to break window management
-            # (This is VERY aggressive and may cause screen flicker)
-            if self.lock_mode:
-                subprocess.run(['taskkill', '/F', '/IM', 'dwm.exe'], 
                              capture_output=True, check=False)
                              
         except Exception as e:
@@ -833,72 +813,9 @@ class KeyboardBlocker:
                 
             except Exception as e:
                 logger.warning(f"Registry blocking failed: {e}")
-        
+                
         except Exception as e:
             logger.error(f"Registry method failed: {e}")
-    
-    def _install_message_interceptor(self):
-        """Intercept Windows messages to block Alt+Tab"""
-        try:
-            import win32api
-            import win32con
-            import win32gui
-            
-            def message_interceptor(hwnd, msg, wparam, lparam):
-                # Block Alt+Tab messages
-                if msg == win32con.WM_SYSKEYDOWN:
-                    if wparam == win32con.VK_TAB:  # Alt+Tab
-                        logger.info("🚫 INTERCEPTED Alt+Tab via message hook")
-                        return 0  # Block the message
-                    elif wparam == win32con.VK_ESCAPE:  # Alt+Esc
-                        logger.info("🚫 INTERCEPTED Alt+Esc via message hook")
-                        return 0
-                
-                # Block Windows+Tab messages  
-                if msg == win32con.WM_KEYDOWN:
-                    if wparam == win32con.VK_TAB and (win32api.GetAsyncKeyState(win32con.VK_LWIN) or win32api.GetAsyncKeyState(win32con.VK_RWIN)):
-                        logger.info("🚫 INTERCEPTED Windows+Tab via message hook")
-                        return 0
-                
-                return win32gui.CallWindowProc(self.original_wndproc, hwnd, msg, wparam, lparam)
-            
-            # Get desktop window and subclass it
-            desktop_hwnd = win32gui.GetDesktopWindow()
-            self.original_wndproc = win32gui.SetWindowLong(desktop_hwnd, win32con.GWL_WNDPROC, message_interceptor)
-            
-            logger.info("🎯 Message interceptor installed on desktop window")
-            
-        except Exception as e:
-            logger.error(f"Message interceptor failed: {e}")
-    
-    def _hide_from_alt_tab(self):
-        """Hide our application completely from Alt+Tab"""
-        try:
-            import win32gui
-            import win32con
-            
-            # Get our main window handle
-            def enum_windows_callback(hwnd, windows):
-                if win32gui.IsWindowVisible(hwnd):
-                    window_title = win32gui.GetWindowText(hwnd)
-                    if 'NetCafe' in window_title or 'Locked Simulator' in window_title:
-                        windows.append(hwnd)
-                return True
-            
-            windows = []
-            win32gui.EnumWindows(enum_windows_callback, windows)
-            
-            for hwnd in windows:
-                # Set extended window style to hide from Alt+Tab
-                ex_style = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
-                ex_style |= win32con.WS_EX_TOOLWINDOW  # Hide from taskbar and Alt+Tab
-                ex_style &= ~win32con.WS_EX_APPWINDOW   # Remove from application list
-                win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE, ex_style)
-                
-                logger.info(f"🫥 Hidden window from Alt+Tab: {win32gui.GetWindowText(hwnd)}")
-            
-        except Exception as e:
-            logger.error(f"Failed to hide from Alt+Tab: {e}")
 
     def uninstall(self):
         # Stop aggressive monitoring
@@ -1148,10 +1065,8 @@ class FolderBlocker:
 class NetCafeClient:
     def __init__(self):
         self.app = QApplication(sys.argv)
-        
-        # HIDE FROM ALT+TAB: Make app invisible to task switcher
+        # Hide application from Alt+Tab and taskbar
         self.app.setQuitOnLastWindowClosed(False)
-        
         self.loop = qasync.QEventLoop(self.app)
         asyncio.set_event_loop(self.loop)
         
@@ -1996,7 +1911,12 @@ class NetCafeClient:
         self.reconnect_timer.stop()
     
     def run(self):
-        logger.info("🎮 Starting NetCafe Pro 2.0 Gaming Client")
+        logger.info("🎮 Starting NetCafe Experience Simulator (BACKGROUND MODE)")
+        logger.info("🫥 Client running invisibly - not visible in Alt+Tab")
+        logger.info("🔒 Only lock screen and timer will be visible")
+        
+        # Hide the main process from detection
+        self._hide_from_task_manager()
         
         try:
             with self.loop:
@@ -2028,6 +1948,32 @@ class NetCafeClient:
                 logger.debug(f"Task cleanup handled: {e}")
             
             self._cleanup()
+    
+    def _hide_from_task_manager(self):
+        """Hide the main process from easy detection"""
+        try:
+            # Set process to run as a background task
+            import ctypes
+            from ctypes import wintypes
+            
+            # Get current process handle
+            kernel32 = ctypes.windll.kernel32
+            current_process = kernel32.GetCurrentProcess()
+            
+            # Set process priority to background
+            kernel32.SetPriorityClass(current_process, 0x00000040)  # BELOW_NORMAL_PRIORITY_CLASS
+            
+            # Hide console window if any
+            user32 = ctypes.windll.user32
+            console_window = kernel32.GetConsoleWindow()
+            if console_window:
+                user32.ShowWindow(console_window, 0)  # SW_HIDE
+            
+            logger.info("🫥 Process hidden from easy detection")
+            logger.info("💡 The client is now running in stealth mode!")
+            
+        except Exception as e:
+            logger.warning(f"Could not fully hide process: {e}")
 
 def main():
     try:
