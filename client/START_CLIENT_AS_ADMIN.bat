@@ -17,7 +17,13 @@ if %errorLevel% == 0 (
     echo 📁 Folder protection will be ACTIVE
     echo.
     cd /d "%~dp0"
-    python netcafe_client.py
+    echo 🚀 Starting client in background...
+    start "NetCafe Client" /min python netcafe_client.py
+    echo ✅ NetCafe Gaming Client started in background
+    echo 📱 Check system tray for client status
+    echo.
+    timeout /t 3 > nul
+    echo 👋 Client launcher completed. You can close this window.
     pause
 ) else (
     echo ❌ Administrator privileges required!

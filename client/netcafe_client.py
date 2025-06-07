@@ -92,7 +92,7 @@ class TimerOverlay(QWidget):
             Qt.Tool
         )
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setWindowTitle('🎮 NetCafe Pro 2.0 - Session Timer')
+        self.setWindowTitle('🎮 NetCafe Experience Simulator - Session Timer')
         
         layout = QVBoxLayout(self)
         
@@ -183,10 +183,10 @@ class LockScreen(QWidget):
         layout = QVBoxLayout(self)
         
         # Logo
-        logo_label = QLabel('🎮 NetCafe Pro 2.0', self)
+        logo_label = QLabel('🎮 NetCafe Experience Simulator', self)
         logo_label.setStyleSheet('''
             color: #00FF88; 
-            font-size: 56px; 
+            font-size: 48px; 
             font-weight: bold; 
             margin-bottom: 30px;
             background: rgba(0,255,136,0.1);
@@ -198,7 +198,7 @@ class LockScreen(QWidget):
         layout.addWidget(logo_label)
         
         # Status message
-        self.status_label = QLabel('🔒 Computer Locked', self)
+        self.status_label = QLabel('🔒 Locked Simulator', self)
         self.status_label.setStyleSheet('''
             color: white; 
             font-size: 36px; 
@@ -209,10 +209,10 @@ class LockScreen(QWidget):
         layout.addWidget(self.status_label)
         
         # Details
-        self.details_label = QLabel('Please login to start your session...', self)
+        self.details_label = QLabel('Simulating Real Experience\nPlease login to start your session...', self)
         self.details_label.setStyleSheet('''
             color: #aaa; 
-            font-size: 22px; 
+            font-size: 20px; 
             margin-top: 24px;
             background: rgba(255,255,255,0.1);
             padding: 20px;
@@ -242,43 +242,57 @@ class LockScreen(QWidget):
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
                     stop:0 #00FF88, stop:1 #00D4AA);
                 color: black;
-                font-size: 24px;
+                font-family: "Segoe UI", Arial, sans-serif;
+                font-size: 28px;
                 font-weight: bold;
-                padding: 20px 40px;
-                border: none;
+                padding: 0px;
+                border: 3px solid rgba(0,255,136,0.8);
                 border-radius: 16px;
                 margin-top: 30px;
-                border: 3px solid rgba(0,255,136,0.8);
+                text-align: center;
             }
             QPushButton:hover {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
                     stop:0 #00D4AA, stop:1 #00FF88);
-                transform: scale(1.05);
                 border: 3px solid #00FF88;
+                color: #001100;
             }
             QPushButton:pressed {
                 background: #008855;
-                transform: scale(0.98);
+                border: 3px solid #00AA66;
+                color: white;
             }
             QPushButton:disabled {
-                background: #444;
-                color: #888;
-                border: 3px solid #666;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                    stop:0 #444444, stop:1 #333333);
+                color: #888888;
+                border: 3px solid #666666;
             }
         ''')
-        self.login_button.setFixedSize(300, 80)
+        self.login_button.setFixedSize(350, 90)
+        self.login_button.setFont(self.login_button.font())
         
-        # Center the button
-        button_layout = QHBoxLayout()
-        button_layout.addStretch()
-        button_layout.addWidget(self.login_button)
-        button_layout.addStretch()
-        layout.addLayout(button_layout)
+        # Add some spacing before button
+        layout.addStretch()
+        
+        # Center the button with proper spacing
+        button_container = QWidget()
+        button_layout = QVBoxLayout(button_container)
+        button_layout.setContentsMargins(0, 20, 0, 40)
+        
+        # Horizontal centering
+        h_layout = QHBoxLayout()
+        h_layout.addStretch()
+        h_layout.addWidget(self.login_button)
+        h_layout.addStretch()
+        
+        button_layout.addLayout(h_layout)
+        layout.addWidget(button_container)
         
         # Initially disabled until connected
         self.login_button.setEnabled(False)
     
-    def show_lock(self, message='🔒 Computer Locked', details='Please login to continue...'):
+    def show_lock(self, message='🔒 Locked Simulator', details='Please login to continue...'):
         self.status_label.setText(message)
         self.details_label.setText(details)
         self.showFullScreen()
@@ -345,7 +359,7 @@ class LockScreen(QWidget):
 class LoginDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle('🎮 NetCafe Pro 2.0 - Login')
+        self.setWindowTitle('🎮 NetCafe Experience Simulator - Login')
         self.setFixedSize(450, 300)
         
         # SECURITY: Remove close button and make dialog modal + always on top
@@ -354,11 +368,16 @@ class LoginDialog(QDialog):
             Qt.WindowStaysOnTopHint | 
             Qt.CustomizeWindowHint |  # This removes close button
             Qt.WindowTitleHint |      # Keep title bar but no close button
-            Qt.WindowSystemMenuHint   # Keep system menu but no close
+            Qt.WindowSystemMenuHint |  # Keep system menu but no close
+            Qt.Tool  # Tool windows appear above normal windows
         )
         
         # SECURITY: Make dialog modal so it blocks interaction with other windows
         self.setModal(True)
+        
+        # Force window to be on top layer
+        self.setAttribute(Qt.WA_ShowWithoutActivating, False)
+        self.setAttribute(Qt.WA_AlwaysShowToolTips, True)
         
         # Gaming style
         self.setStyleSheet('''
@@ -537,76 +556,93 @@ class KeyboardBlocker:
             WM_SYSKEYDOWN = 0x0104
             
             def low_level_keyboard_proc(nCode, wParam, lParam):
-                if not self.enabled:
-                    return user32.CallNextHookExW(self.hooked, nCode, wParam, lParam)
-                
-                if nCode == 0:  # HC_ACTION
-                    # Get virtual key code from lParam structure
-                    vk_code = ctypes.cast(lParam, ctypes.POINTER(wintypes.DWORD))[0]
+                try:
+                    if not self.enabled or nCode < 0:
+                        return user32.CallNextHookExW(self.hooked, nCode, wParam, lParam)
                     
-                    # Only process key down events
-                    if wParam in (WM_KEYDOWN, WM_SYSKEYDOWN):
+                    if nCode == 0:  # HC_ACTION
+                        # Get virtual key code from lParam structure
+                        vk_code = ctypes.cast(lParam, ctypes.POINTER(wintypes.DWORD))[0]
                         
-                        # Lock mode: Strict blocking when computer is locked
-                        if self.lock_mode:
-                            # Block Windows keys (Left: 0x5B, Right: 0x5C)
-                            if vk_code in (0x5B, 0x5C):
-                                logger.info(f"🔒 BLOCKED Windows key on lock screen (VK: {vk_code})")
-                                return 1
+                        # Only process key down events
+                        if wParam in (WM_KEYDOWN, WM_SYSKEYDOWN):
                             
-                            # Block Alt+Tab (Tab: 0x09 with Alt modifier)
-                            if vk_code == 0x09 and user32.GetAsyncKeyState(0x12) & 0x8000:  # Alt key
-                                logger.info("🔒 BLOCKED Alt+Tab on lock screen")
-                                return 1
+                            # Lock mode: Strict blocking when computer is locked
+                            if self.lock_mode:
+                                # Block Windows keys (Left: 0x5B, Right: 0x5C)
+                                if vk_code in (0x5B, 0x5C):
+                                    logger.info(f"🔒 BLOCKED Windows key (VK: {hex(vk_code)})")
+                                    return 1
+                                
+                                # Block Tab key completely (catches Alt+Tab)
+                                if vk_code == 0x09:
+                                    logger.info("🔒 BLOCKED Tab key (Alt+Tab prevention)")
+                                    return 1
+                                
+                                # Block F4 key completely (catches Alt+F4)
+                                if vk_code == 0x73:
+                                    logger.info("🔒 BLOCKED F4 key (Alt+F4 prevention)")
+                                    return 1
+                                
+                                # Block Escape key completely (catches Ctrl+Esc)
+                                if vk_code == 0x1B:
+                                    logger.info("🔒 BLOCKED Escape key (system menu prevention)")
+                                    return 1
+                                
+                                # Block additional system keys
+                                blocked_keys = {
+                                    0x5D: "Menu/Context key",
+                                    0x2C: "Print Screen",
+                                    0x91: "Scroll Lock",
+                                    0x13: "Pause/Break",
+                                    0x2D: "Insert",
+                                    0x2E: "Delete",
+                                    0x24: "Home",
+                                    0x23: "End",
+                                    0x21: "Page Up",
+                                    0x22: "Page Down"
+                                }
+                                
+                                if vk_code in blocked_keys:
+                                    logger.info(f"🔒 BLOCKED {blocked_keys[vk_code]} key")
+                                    return 1
+                                
+                                # Block Alt key itself to prevent Alt+anything
+                                if vk_code in (0x12, 0xA4, 0xA5):  # Alt, Left Alt, Right Alt
+                                    logger.info("🔒 BLOCKED Alt key")
+                                    return 1
+                                
+                                # Block Ctrl key to prevent Ctrl+anything
+                                if vk_code in (0x11, 0xA2, 0xA3):  # Ctrl, Left Ctrl, Right Ctrl
+                                    logger.info("🔒 BLOCKED Ctrl key")
+                                    return 1
+                                
+                                # Block function keys
+                                if 0x70 <= vk_code <= 0x87:  # F1-F24
+                                    logger.info(f"🔒 BLOCKED F{vk_code - 0x6F} key")
+                                    return 1
                             
-                            # Block Alt+F4 (F4: 0x73 with Alt modifier)
-                            if vk_code == 0x73 and user32.GetAsyncKeyState(0x12) & 0x8000:  # Alt key
-                                logger.info("🔒 BLOCKED Alt+F4 on lock screen")
-                                return 1
-                            
-                            # Block Ctrl+Esc (Esc: 0x1B with Ctrl modifier)
-                            if vk_code == 0x1B and user32.GetAsyncKeyState(0x11) & 0x8000:  # Ctrl key
-                                logger.info("🔒 BLOCKED Ctrl+Esc on lock screen")
-                                return 1
-                            
-                            # Block Ctrl+Shift+Esc (Task Manager)
-                            if (vk_code == 0x1B and 
-                                user32.GetAsyncKeyState(0x11) & 0x8000 and  # Ctrl
-                                user32.GetAsyncKeyState(0x10) & 0x8000):    # Shift
-                                logger.info("🔒 BLOCKED Ctrl+Shift+Esc on lock screen")
-                                return 1
-                            
-                            # Block Windows+L (Lock computer: L with Windows key)
-                            if (vk_code == 0x4C and 
-                                (user32.GetAsyncKeyState(0x5B) & 0x8000 or 
-                                 user32.GetAsyncKeyState(0x5C) & 0x8000)):
-                                logger.info("🔒 BLOCKED Windows+L on lock screen")
-                                return 1
-                            
-                            # Block Windows+R (Run dialog: R with Windows key)
-                            if (vk_code == 0x52 and 
-                                (user32.GetAsyncKeyState(0x5B) & 0x8000 or 
-                                 user32.GetAsyncKeyState(0x5C) & 0x8000)):
-                                logger.info("🔒 BLOCKED Windows+R on lock screen")
-                                return 1
-                            
-                            # Block Windows+D (Show desktop)
-                            if (vk_code == 0x44 and 
-                                (user32.GetAsyncKeyState(0x5B) & 0x8000 or 
-                                 user32.GetAsyncKeyState(0x5C) & 0x8000)):
-                                logger.info("🔒 BLOCKED Windows+D on lock screen")  
-                                return 1
-                        
-                        # Session mode: Minimal blocking - let users game normally
-                        else:
-                            # Only block Ctrl+Shift+Esc (Task Manager) during gaming
-                            if (vk_code == 0x1B and 
-                                user32.GetAsyncKeyState(0x11) & 0x8000 and  # Ctrl
-                                user32.GetAsyncKeyState(0x10) & 0x8000):    # Shift
-                                logger.info("🎮 BLOCKED Ctrl+Shift+Esc during gaming session")
-                                return 1
-                
-                return user32.CallNextHookExW(self.hooked, nCode, wParam, lParam)
+                            # Session mode: Minimal blocking - let users game normally
+                            else:
+                                # Only block specific dangerous combinations during gaming
+                                
+                                # Block Ctrl+Shift+Esc (Task Manager)
+                                if (vk_code == 0x1B and 
+                                    user32.GetAsyncKeyState(0x11) & 0x8000 and  # Ctrl
+                                    user32.GetAsyncKeyState(0x10) & 0x8000):    # Shift
+                                    logger.info("🎮 BLOCKED Ctrl+Shift+Esc during gaming")
+                                    return 1
+                                
+                                # Block Windows keys during gaming too
+                                if vk_code in (0x5B, 0x5C):
+                                    logger.info(f"🎮 BLOCKED Windows key during gaming")
+                                    return 1
+                    
+                    return user32.CallNextHookExW(self.hooked, nCode, wParam, lParam)
+                    
+                except Exception as e:
+                    logger.error(f"Hook procedure error: {e}")
+                    return user32.CallNextHookExW(self.hooked, nCode, wParam, lParam)
             
             # Create hook function
             self.pointer = HOOKPROC(low_level_keyboard_proc)
@@ -620,42 +656,34 @@ class KeyboardBlocker:
             )
             
             if not self.hooked:
-                raise Exception(f"SetWindowsHookEx failed: {ctypes.get_last_error()}")
+                error_code = ctypes.get_last_error()
+                raise Exception(f"SetWindowsHookEx failed with error code: {error_code}")
             
             self.enabled = True
-            
-            # Start message pump in separate thread
-            def message_pump():
-                msg = wintypes.MSG()
-                bRet = wintypes.BOOL()
-                
-                while self.enabled and self.hooked:
-                    try:
-                        bRet = user32.GetMessageW(ctypes.byref(msg), None, 0, 0)
-                        if bRet == 0 or bRet == -1:  # WM_QUIT or error
-                            break
-                        user32.TranslateMessage(ctypes.byref(msg))
-                        user32.DispatchMessageW(ctypes.byref(msg))
-                    except Exception as e:
-                        logger.error(f"Message pump error: {e}")
-                        break
-            
-            self.thread = threading.Thread(target=message_pump, daemon=True)
-            self.thread.start()
             
             mode_str = "Lock mode (strict blocking)" if lock_mode else "Gaming mode (minimal blocking)"
             logger.info(f"🔐 Keyboard blocker installed successfully ({mode_str})")
             
             # Test that blocking is working
             if lock_mode:
-                logger.info("🔒 LOCK SCREEN PROTECTION ACTIVE - Alt+Tab, Alt+F4, Windows keys BLOCKED")
+                logger.info("🔒 LOCK SCREEN PROTECTION ACTIVE:")
+                logger.info("   - Windows keys BLOCKED")
+                logger.info("   - Alt+Tab BLOCKED") 
+                logger.info("   - Alt+F4 BLOCKED")
+                logger.info("   - Ctrl+Esc BLOCKED")
+                logger.info("   - Function keys BLOCKED")
+                logger.info("   - System keys BLOCKED")
             else:
-                logger.info("🎮 GAMING PROTECTION ACTIVE - Only Task Manager blocked")
+                logger.info("🎮 GAMING PROTECTION ACTIVE:")
+                logger.info("   - Windows keys BLOCKED")
+                logger.info("   - Task Manager BLOCKED")
+                logger.info("   - Most gaming keys ALLOWED")
                 
         except Exception as e:
             logger.error(f"❌ Failed to install keyboard blocker: {e}")
             logger.error(f"Error details: {traceback.format_exc()}")
-            logger.warning("⚠️  Running without administrator privileges may cause blocking to fail!")
+            logger.warning("⚠️  ADMINISTRATOR PRIVILEGES REQUIRED for keyboard blocking!")
+            logger.warning("⚠️  Please restart client as Administrator for full protection!")
             self.enabled = False
     
     def uninstall(self):
@@ -930,7 +958,7 @@ class NetCafeClient:
         # Start with lock screen
         self._show_lock_screen()
         
-        logger.info(f"NetCafe Client initialized. Computer ID: {self.computer_id}")
+        logger.info(f"NetCafe Experience Simulator initialized. Computer ID: {self.computer_id}")
         
         # Set initial status
         self.set_status('Initializing...', False)
@@ -982,7 +1010,7 @@ class NetCafeClient:
             painter.end()
             
             self.tray.setIcon(QIcon(pixmap))
-            self.tray.setToolTip('🎮 NetCafe Pro 2.0 - Gaming Client')
+            self.tray.setToolTip('🎮 NetCafe Experience Simulator - Gaming Client')
             
             # Context menu
             menu = QMenu()
@@ -1059,7 +1087,7 @@ class NetCafeClient:
     def _minimize_overlay(self):
         self.timer_overlay.hide()
         self.tray.showMessage(
-            '🎮 NetCafe Pro 2.0',
+            '🎮 NetCafe Experience Simulator',
             'Timer minimized. Double-click tray icon to restore.',
             QSystemTrayIcon.Information,
             3000
@@ -1248,6 +1276,17 @@ class NetCafeClient:
         try:
             dialog = LoginDialog()
             
+            # Force dialog to appear on top of lock screen
+            # Temporarily hide lock screen to ensure dialog is visible
+            lock_was_visible = self.lock_screen.isVisible()
+            if lock_was_visible:
+                self.lock_screen.hide()
+            
+            dialog.show()
+            dialog.raise_()
+            dialog.activateWindow()
+            dialog.setFocus()
+            
             # Keep showing login until successful or user provides valid credentials
             max_attempts = 5
             attempt = 0
@@ -1255,6 +1294,11 @@ class NetCafeClient:
             while attempt < max_attempts:
                 attempt += 1
                 logger.info(f"🔐 Login attempt {attempt}/{max_attempts}")
+                
+                # Ensure dialog is on top before each attempt
+                dialog.raise_()
+                dialog.activateWindow()
+                dialog.setFocus()
                 
                 if dialog.exec() and dialog.accepted_login:
                     username, password = dialog.get_credentials()
@@ -1293,6 +1337,10 @@ class NetCafeClient:
             # If we got here without success, keep computer locked
             if attempt >= max_attempts:
                 logger.warning("🔒 Maximum login attempts reached - keeping computer locked")
+                self._show_lock_screen()
+            
+            # Restore lock screen if it was visible before and no successful login
+            elif lock_was_visible and not self.session_active:
                 self._show_lock_screen()
                 
         except Exception as e:
